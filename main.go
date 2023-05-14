@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	run "github.com/ayupov-ayaz/anti-bute-force/cli/cmd"
+	run "github.com/ayupov-ayaz/anti-brute-force/cli/cmd"
 )
 
 func main() {

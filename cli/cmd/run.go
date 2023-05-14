@@ -3,21 +3,32 @@ package run
 import (
 	"fmt"
 
-	grpcserver "github.com/ayupov-ayaz/anti-bute-force/internal/server/grpc"
+	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
 
-	"github.com/ayupov-ayaz/anti-bute-force/config"
-	"github.com/ayupov-ayaz/anti-bute-force/internal/app/checker"
-	"github.com/ayupov-ayaz/anti-bute-force/internal/app/manager"
-	"github.com/ayupov-ayaz/anti-bute-force/internal/modules/buckets"
-	"github.com/ayupov-ayaz/anti-bute-force/internal/modules/iplist"
-	httpserver "github.com/ayupov-ayaz/anti-bute-force/internal/server/http"
+	redisstore "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
+
+	grpcserver "github.com/ayupov-ayaz/anti-brute-force/internal/server/grpc"
+
+	"github.com/ayupov-ayaz/anti-brute-force/config"
+	"github.com/ayupov-ayaz/anti-brute-force/internal/app/checker"
+	"github.com/ayupov-ayaz/anti-brute-force/internal/app/manager"
+	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/buckets"
+	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/iplist"
+	httpserver "github.com/ayupov-ayaz/anti-brute-force/internal/server/http"
 )
 
 func Run() error {
 	cfg := config.ParseConfig()
 
-	blackList := iplist.New(cfg.IPList.BlackListAddr)
-	whiteList := iplist.New(cfg.IPList.WhiteListAddr)
+	redisClient, err := redisstore.NewRedisClient(cfg.Redis)
+	if err != nil {
+		return fmt.Errorf("redis client: %w", err)
+	}
+
+	storage := redisstorage.New(redisClient)
+
+	blackList := iplist.New(cfg.IPList.BlackListAddr, storage)
+	whiteList := iplist.New(cfg.IPList.WhiteListAddr, storage)
 	ipBuckets := buckets.New()
 
 	ipManager := manager.New(
