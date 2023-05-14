@@ -1,5 +1,7 @@
 package config
 
+import rediscfg "github.com/ayupov-ayaz/anti-brute-force/config/redis"
+
 type HTTP struct {
 	Port int
 }
@@ -13,16 +15,10 @@ type IPList struct {
 	WhiteListAddr string
 }
 
-type Redis struct {
-	Addr     string
-	Password string
-	User     string
-}
-
 type Config struct {
 	HTTP   HTTP
 	GRPC   GRPC
-	Redis  Redis
+	Redis  rediscfg.Redis
 	IPList IPList
 }
 
