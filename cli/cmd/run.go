@@ -3,6 +3,8 @@ package run
 import (
 	"fmt"
 
+	"github.com/ayupov-ayaz/anti-brute-force/internal/server/http/handlers"
+
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/logger"
 
 	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
@@ -64,10 +66,11 @@ func Run() error {
 	}
 
 	if cfg.UseHTTP() {
-		server := httpserver.New(
-			httpserver.WithChecker(ipChecker),
-			httpserver.WithManager(ipManager))
-		if err := server.Start(cfg.HTTP.Port); err != nil {
+		http := httpserver.New(
+			httpserver.WithChecker(handlers.NewChecker(ipChecker)),
+			httpserver.WithManager(handlers.NewManager(ipManager)))
+
+		if err := http.Start(httpserver.NewFiber(), cfg.HTTP.Port); err != nil {
 			return fmt.Errorf("http server: %w", err)
 		}
 	}

@@ -1,13 +1,10 @@
 package config
 
 import (
+	httpcfg "github.com/ayupov-ayaz/anti-brute-force/config/http"
 	loggercfg "github.com/ayupov-ayaz/anti-brute-force/config/logger"
 	rediscfg "github.com/ayupov-ayaz/anti-brute-force/config/redis"
 )
-
-type HTTP struct {
-	Port int
-}
 
 type GRPC struct {
 	Port int
@@ -19,7 +16,7 @@ type IPList struct {
 }
 
 type Config struct {
-	HTTP   HTTP
+	HTTP   httpcfg.HTTP
 	GRPC   GRPC
 	Redis  rediscfg.Redis
 	Logger loggercfg.Logger
