@@ -1,6 +1,10 @@
 package manager
 
-import "context"
+import (
+	"context"
+
+	"go.uber.org/zap"
+)
 
 // todo: log
 
@@ -17,6 +21,7 @@ type App struct {
 	blackList IPList
 	whiteList IPList
 	resetter  Resetter
+	logger    *zap.Logger
 }
 
 type Config func(app *App)
@@ -47,26 +52,75 @@ func WithResetter(resetter Resetter) Config {
 	}
 }
 
-func (a *App) AddToBlackList(ctx context.Context, ip, mask string) error {
-	return a.blackList.Add(ctx, ip)
+func WithLogger(logger *zap.Logger) Config {
+	return func(app *App) {
+		app.logger = logger
+	}
 }
 
 func joinIPMask(ip, mask string) string {
 	return ip + "/" + mask
 }
 
+func (a *App) AddToBlackList(ctx context.Context, ip, mask string) error {
+	key := joinIPMask(ip, mask)
+
+	if err := a.blackList.Add(ctx, key); err != nil {
+		a.logger.Error("add to black list failed",
+			zap.String("ip/mask", key),
+			zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
 func (a *App) AddToWhiteList(ctx context.Context, ip, mask string) error {
-	return a.whiteList.Add(ctx, joinIPMask(ip, mask))
+	key := joinIPMask(ip, mask)
+
+	if err := a.whiteList.Add(ctx, key); err != nil {
+		a.logger.Error("add to white list failed",
+			zap.String("ip/mask", key),
+			zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (a *App) RemoveFromBlackList(ctx context.Context, ip, mask string) error {
-	return a.blackList.Remove(ctx, joinIPMask(ip, mask))
+	key := joinIPMask(ip, mask)
+
+	if err := a.blackList.Remove(ctx, key); err != nil {
+		a.logger.Error("remove from black list failed",
+			zap.String("ip/mask", key),
+			zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (a *App) RemoveFromWhiteList(ctx context.Context, ip, mask string) error {
-	return a.whiteList.Remove(ctx, joinIPMask(ip, mask))
+	key := joinIPMask(ip, mask)
+
+	if err := a.whiteList.Remove(ctx, key); err != nil {
+		a.logger.Error("remove from white list failed",
+			zap.String("ip/mask", key),
+			zap.Error(err))
+		return err
+	}
+
+	return nil
 }
 
 func (a *App) Reset(ctx context.Context, login, ip string) error {
-	return a.resetter.Reset(ctx, login, ip)
+	if err := a.resetter.Reset(ctx, login, ip); err != nil {
+		a.logger.Error("reset failed",
+			zap.String("ip", ip),
+			zap.String("login", login),
+			zap.Error(err))
+	}
+
+	return nil
 }

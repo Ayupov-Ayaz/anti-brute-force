@@ -3,9 +3,11 @@ package run
 import (
 	"fmt"
 
+	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/logger"
+
 	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
 
-	redisstore "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
+	redissdb "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
 
 	grpcserver "github.com/ayupov-ayaz/anti-brute-force/internal/server/grpc"
 
@@ -18,9 +20,17 @@ import (
 )
 
 func Run() error {
-	cfg := config.ParseConfig()
+	cfg, err := config.ParseConfig()
+	if err != nil {
+		return fmt.Errorf("parse config: %w", err)
+	}
 
-	redisClient, err := redisstore.NewRedisClient(cfg.Redis)
+	logger, err := logger.New(cfg.Logger)
+	if err != nil {
+		return fmt.Errorf("logger: %w", err)
+	}
+
+	redisClient, err := redissdb.NewRedisClient(cfg.Redis)
 	if err != nil {
 		return fmt.Errorf("redis client: %w", err)
 	}
@@ -34,12 +44,14 @@ func Run() error {
 	ipManager := manager.New(
 		manager.WithResetter(ipBuckets),
 		manager.WithBlackList(blackList),
-		manager.WithWhiteList(whiteList))
+		manager.WithWhiteList(whiteList),
+		manager.WithLogger(logger))
 
 	ipChecker := checker.New(
 		checker.WithBuckets(ipBuckets),
-		checker.WithBlackList(whiteList),
-		checker.WithBlackList(blackList))
+		checker.WithWhiteList(whiteList),
+		checker.WithBlackList(blackList),
+		checker.WithLogger(logger))
 
 	if cfg.UseGRPC() {
 		server := grpcserver.New(

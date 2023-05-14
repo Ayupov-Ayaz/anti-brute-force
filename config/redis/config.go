@@ -1,7 +1,7 @@
 package rediscfg
 
 type Redis struct {
-	Addr string
+	Addr string `validate:"required"`
 	Pass string
 	User string
 }
