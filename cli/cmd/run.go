@@ -5,6 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/ayupov-ayaz/anti-brute-force/internal/server/http/handlers"
+
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/logger"
 
 	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
@@ -30,7 +32,7 @@ var (
 		RunE:  run,
 		Long: `Run HTTP or GRPC server.
 Example: ./anti-brute-force run -p 8080
-Example: ./anti-brute-force run -p 8080 -g true`,
+Example: ./anti-brute-force run -p 8080 -g`,
 	}
 )
 
@@ -78,8 +80,6 @@ func run(_ *cobra.Command, _ []string) error {
 		checker.WithLogger(zLogger))
 
 	port := cfg.Server.Port
-	fmt.Println(cfg.Server)
-
 	if useGRPC {
 		server := grpcserver.New(
 			grpcserver.WithManager(ipManager),
@@ -90,9 +90,10 @@ func run(_ *cobra.Command, _ []string) error {
 		}
 	} else {
 		server := httpserver.New(
-			httpserver.WithChecker(ipChecker),
-			httpserver.WithManager(ipManager))
-		if err := server.Start(port); err != nil {
+			httpserver.WithChecker(handlers.NewChecker(ipChecker)),
+			httpserver.WithManager(handlers.NewManager(ipManager, zLogger)))
+
+		if err := server.Start(httpserver.NewFiber(), port); err != nil {
 			return fmt.Errorf("http server: %w", err)
 		}
 	}

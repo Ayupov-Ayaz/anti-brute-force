@@ -8,3 +8,5 @@
 * docker-compose
 * grpc
 * tests grpc
+* heath check
+* graceful shutdown
