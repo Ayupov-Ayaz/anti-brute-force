@@ -1,9 +1,9 @@
 package rediscfg
 
 type Redis struct {
-	Addr string `validate:"required"`
-	Pass string
-	User string
+	Addr string `mapstructure:"addr" validate:"required"`
+	Pass string `mapstructure:"password"`
+	User string `mapstructure:"user"`
 }
 
 func (r Redis) Address() string {

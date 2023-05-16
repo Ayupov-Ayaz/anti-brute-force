@@ -3,6 +3,8 @@ package run
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/logger"
 
 	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
@@ -19,13 +21,35 @@ import (
 	httpserver "github.com/ayupov-ayaz/anti-brute-force/internal/server/http"
 )
 
-func Run() error {
-	cfg, err := config.ParseConfig()
+var (
+	port    int
+	useGRPC bool
+	runCmd  = &cobra.Command{
+		Use:   "run -p [port] -g [use grpc]",
+		Short: "run server",
+		RunE:  run,
+		Long: `Run HTTP or GRPC server.
+Example: ./anti-brute-force run -p 8080
+Example: ./anti-brute-force run -p 8080 -g true`,
+	}
+)
+
+func init() {
+	runCmd.Flags().IntVarP(&port, "port", "p", 8080, "port")
+	runCmd.Flags().BoolVarP(&useGRPC, "use grpc", "g", false, "use grpc")
+}
+
+func Execute() error {
+	return runCmd.Execute()
+}
+
+func run(_ *cobra.Command, _ []string) error {
+	cfg, err := config.ParseConfig(port, useGRPC)
 	if err != nil {
 		return fmt.Errorf("parse config: %w", err)
 	}
 
-	logger, err := logger.New(cfg.Logger)
+	zLogger, err := logger.New(cfg.Logger)
 	if err != nil {
 		return fmt.Errorf("logger: %w", err)
 	}
@@ -45,29 +69,30 @@ func Run() error {
 		manager.WithResetter(ipBuckets),
 		manager.WithBlackList(blackList),
 		manager.WithWhiteList(whiteList),
-		manager.WithLogger(logger))
+		manager.WithLogger(zLogger))
 
 	ipChecker := checker.New(
 		checker.WithBuckets(ipBuckets),
 		checker.WithWhiteList(whiteList),
 		checker.WithBlackList(blackList),
-		checker.WithLogger(logger))
+		checker.WithLogger(zLogger))
 
-	if cfg.UseGRPC() {
+	port := cfg.Server.Port
+	fmt.Println(cfg.Server)
+
+	if useGRPC {
 		server := grpcserver.New(
 			grpcserver.WithManager(ipManager),
 			grpcserver.WithChecker(ipChecker))
 
-		if err := server.Start(cfg.GRPC.Port); err != nil {
+		if err := server.Start(port); err != nil {
 			return fmt.Errorf("grpc server: %w", err)
 		}
-	}
-
-	if cfg.UseHTTP() {
+	} else {
 		server := httpserver.New(
 			httpserver.WithChecker(ipChecker),
 			httpserver.WithManager(ipManager))
-		if err := server.Start(cfg.HTTP.Port); err != nil {
+		if err := server.Start(port); err != nil {
 			return fmt.Errorf("http server: %w", err)
 		}
 	}
