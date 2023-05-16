@@ -6,24 +6,24 @@ import (
 )
 
 type HTTP struct {
-	Port int
+	Port int `mapstructure:"port"`
 }
 
 type GRPC struct {
-	Port int
+	Port int `mapstructure:"port"`
 }
 
 type IPList struct {
-	BlackListAddr string
-	WhiteListAddr string
+	BlackListAddr string `mapstructure:"blacklist_addr"`
+	WhiteListAddr string `mapstructure:"whitelist_addr"`
 }
 
 type Config struct {
-	HTTP   HTTP
-	GRPC   GRPC
-	Redis  rediscfg.Redis
-	Logger loggercfg.Logger
-	IPList IPList
+	HTTP   HTTP             `mapstructure:"http"`
+	GRPC   GRPC             `mapstructure:"grpc"`
+	Redis  rediscfg.Redis   `mapstructure:"redis"`
+	Logger loggercfg.Logger `mapstructure:"logger"`
+	IPList IPList           `mapstructure:"ip_list"`
 }
 
 func (c Config) UseHTTP() bool {

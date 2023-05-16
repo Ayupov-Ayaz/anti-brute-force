@@ -1,0 +1,13 @@
+http:
+  port: 8080
+grps:
+  port: 0
+redis:
+  addr: "127.0.0.1:6379"
+  user: ""
+  password: ""
+logger:
+  level: "INFO"
+ip_list:
+  blacklist_addr: "black"
+  whitelist_addr: "white"
