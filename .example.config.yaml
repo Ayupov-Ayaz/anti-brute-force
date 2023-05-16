@@ -1,0 +1,14 @@
+server:
+  port: 8090
+  use_grpc: false
+redis:
+  addr: "127.0.0.1:6379"
+  user: ""
+  password: ""
+logger:
+  level: "INFO"
+ip_list:
+  # key in redis for command HSet
+  blacklist_addr: "black"
+  # key in redis for command HSet
+  whitelist_addr: "white"
