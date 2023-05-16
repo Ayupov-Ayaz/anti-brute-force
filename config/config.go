@@ -25,11 +25,3 @@ type Config struct {
 	Logger loggercfg.Logger `mapstructure:"logger"`
 	IPList IPList           `mapstructure:"ip_list"`
 }
-
-func (c Config) UseHTTP() bool {
-	return c.HTTP.Port > 0
-}
-
-func (c Config) UseGRPC() bool {
-	return c.GRPC.Port > 0
-}
