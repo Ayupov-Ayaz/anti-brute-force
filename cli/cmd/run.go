@@ -32,7 +32,7 @@ var (
 		RunE:  run,
 		Long: `Run HTTP or GRPC server.
 Example: ./anti-brute-force run -p 8080
-Example: ./anti-brute-force run -p 8080 -g true`,
+Example: ./anti-brute-force run -p 8080 -g`,
 	}
 )
 
@@ -80,8 +80,6 @@ func run(_ *cobra.Command, _ []string) error {
 		checker.WithLogger(zLogger))
 
 	port := cfg.Server.Port
-	fmt.Println(cfg.Server)
-
 	if useGRPC {
 		server := grpcserver.New(
 			grpcserver.WithManager(ipManager),
