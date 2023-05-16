@@ -1,27 +1,15 @@
 package config
 
 import (
+	listcfg "github.com/ayupov-ayaz/anti-brute-force/config/list"
 	loggercfg "github.com/ayupov-ayaz/anti-brute-force/config/logger"
 	rediscfg "github.com/ayupov-ayaz/anti-brute-force/config/redis"
+	servercfg "github.com/ayupov-ayaz/anti-brute-force/config/server"
 )
 
-type HTTP struct {
-	Port int `mapstructure:"port"`
-}
-
-type GRPC struct {
-	Port int `mapstructure:"port"`
-}
-
-type IPList struct {
-	BlackListAddr string `mapstructure:"blacklist_addr"`
-	WhiteListAddr string `mapstructure:"whitelist_addr"`
-}
-
 type Config struct {
-	HTTP   HTTP             `mapstructure:"http"`
-	GRPC   GRPC             `mapstructure:"grpc"`
+	Server servercfg.Server `mapstructure:"server"`
 	Redis  rediscfg.Redis   `mapstructure:"redis"`
 	Logger loggercfg.Logger `mapstructure:"logger"`
-	IPList IPList           `mapstructure:"ip_list"`
+	IPList listcfg.IPList   `mapstructure:"ip_list"`
 }

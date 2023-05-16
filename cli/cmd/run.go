@@ -44,11 +44,7 @@ func Execute() error {
 }
 
 func run(_ *cobra.Command, _ []string) error {
-	return runServer(false)
-}
-
-func runServer(useGRPC bool) error {
-	cfg, err := config.ParseConfig()
+	cfg, err := config.ParseConfig(port, useGRPC)
 	if err != nil {
 		return fmt.Errorf("parse config: %w", err)
 	}
@@ -81,19 +77,22 @@ func runServer(useGRPC bool) error {
 		checker.WithBlackList(blackList),
 		checker.WithLogger(zLogger))
 
+	port := cfg.Server.Port
+	fmt.Println(cfg.Server)
+
 	if useGRPC {
 		server := grpcserver.New(
 			grpcserver.WithManager(ipManager),
 			grpcserver.WithChecker(ipChecker))
 
-		if err := server.Start(cfg.GRPC.Port); err != nil {
+		if err := server.Start(port); err != nil {
 			return fmt.Errorf("grpc server: %w", err)
 		}
 	} else {
 		server := httpserver.New(
 			httpserver.WithChecker(ipChecker),
 			httpserver.WithManager(ipManager))
-		if err := server.Start(cfg.HTTP.Port); err != nil {
+		if err := server.Start(port); err != nil {
 			return fmt.Errorf("http server: %w", err)
 		}
 	}
