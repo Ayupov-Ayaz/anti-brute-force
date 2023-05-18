@@ -1,31 +1,27 @@
-name: Audit
+name: Upload Go test results
 
-on:
-  push:
-    branches: [main,dev]
-  pull_request:
-    branches: [main,dev]
+on: [push]
 
 jobs:
-  audit:
-    runs-on: ubuntu-20.04
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ '1.17', '1.20' ]
+
     steps:
-
-      - uses: actions/setup-go@v2
-        with: {go-version: 1.17}
-
-      - uses: actions/checkout@v2
-
-      - name: Go modules Cache # Docs: <https://git.io/JfAKn#go---modules>
-        uses: actions/cache@v2
-        id: go-cache
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v4
         with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: ${{ runner.os }}-go-
-
-      - if: steps.go-cache.outputs.cache-hit != 'true'
-        run: go mod download
-
-      - name: Run Unit tests
-        run: go test -race ./...
+          go-version: ${{ matrix.go-version }}
+      - name: Install dependencies
+        run: go get .
+      - name: Test with Go
+        run: go test -json > TestResults-${{ matrix.go-version }}.json
+      - name: Upload Go test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: Go-results-${{ matrix.go-version }}
+          path: TestResults-${{ matrix.go-version }}.json
