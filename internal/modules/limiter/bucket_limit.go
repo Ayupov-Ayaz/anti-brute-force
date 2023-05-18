@@ -9,7 +9,7 @@ import (
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/apperr"
 
-	"github.com/go-redis/redis/v8"
+	redis "github.com/go-redis/redis/v8"
 )
 
 type LeakyBucketLimiter struct {

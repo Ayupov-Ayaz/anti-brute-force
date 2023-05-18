@@ -3,7 +3,7 @@ package internal
 import (
 	limitercfg "github.com/ayupov-ayaz/anti-brute-force/config/limiter"
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/limiter"
-	"github.com/go-redis/redis/v8"
+	redis "github.com/go-redis/redis/v8"
 )
 
 func NewAuthRateLimiter(config limitercfg.Limiter, redis *redis.Client) *limiter.AuthRateLimiter {
