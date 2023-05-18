@@ -49,9 +49,13 @@ func (c *CheckerHTTP) check(ctx *fiber.Ctx) error {
 	err := c.app.Check(ctx.Context(), auth.IP, auth.Login, auth.Pass)
 	status := fiber.StatusOK
 	allowed := true
-	if err != nil && errors.Is(err, apperr.ErrUserIsBlocked) {
-		status = fiber.StatusForbidden
-		allowed = false
+	if err != nil {
+		if errors.Is(err, apperr.ErrUserIsBlocked) {
+			status = fiber.StatusForbidden
+			allowed = false
+		} else {
+			return err
+		}
 	}
 
 	return ctx.Status(status).JSON(Response{Ok: allowed})
