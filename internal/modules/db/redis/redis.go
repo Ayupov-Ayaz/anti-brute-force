@@ -6,7 +6,7 @@ import (
 
 	"github.com/alicebob/miniredis"
 
-	"github.com/redis/go-redis/v9"
+	redis "github.com/go-redis/redis/v8"
 )
 
 type Config interface {

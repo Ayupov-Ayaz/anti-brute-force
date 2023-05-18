@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/redis/go-redis/v9"
+	redis "github.com/go-redis/redis/v8"
 
 	redisstore "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
 	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"

@@ -6,7 +6,7 @@ import (
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/server/http/handlers"
 
-	"github.com/gofiber/fiber/v2"
+	fiber "github.com/gofiber/fiber/v2"
 )
 
 type Server struct {

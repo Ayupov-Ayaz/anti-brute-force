@@ -3,9 +3,12 @@
 ### [Task](task.md)
 
 ## Todo
+* linters
+* makefile
 * tests http
-* checker (rate limit)
+* reset buckets
 * docker-compose
+* ci/cd
 * grpc
 * tests grpc
 * heath check

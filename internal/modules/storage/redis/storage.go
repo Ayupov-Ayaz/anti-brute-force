@@ -3,7 +3,7 @@ package redisstorage
 import (
 	"context"
 
-	"github.com/redis/go-redis/v9"
+	redis "github.com/go-redis/redis/v8"
 )
 
 type Redis interface {
