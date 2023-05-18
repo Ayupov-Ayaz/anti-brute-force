@@ -3,8 +3,8 @@
 ### [Task](task.md)
 
 ## Todo
+* fix ip+mask (white / black list)
 * linters
-* makefile
 * tests http
 * reset buckets
 * docker-compose
