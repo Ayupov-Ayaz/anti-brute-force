@@ -5,9 +5,10 @@ go 1.20
 require (
 	github.com/alicebob/miniredis v2.5.0+incompatible
 	github.com/go-playground/validator/v10 v10.13.0
+	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gofiber/fiber/v2 v2.45.0
 	github.com/golang/mock v1.6.0
-	github.com/redis/go-redis/v9 v9.0.4
+	github.com/rs/zerolog v1.29.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/viper v1.15.0
 	github.com/stretchr/testify v1.8.2

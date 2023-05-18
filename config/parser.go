@@ -1,9 +1,6 @@
 package config
 
 import (
-	"fmt"
-
-	"github.com/go-playground/validator/v10"
 	"github.com/spf13/viper"
 )
 
@@ -37,10 +34,6 @@ func ParseConfig(argPort int, argUseGRPC bool) (*Config, error) {
 	}
 
 	mergeConfigs(cfg, argPort, argUseGRPC)
-
-	if err := validator.New().Struct(cfg); err != nil {
-		return nil, fmt.Errorf("validate configs failed: %w", err)
-	}
 
 	return cfg, nil
 }

@@ -2,13 +2,10 @@ package checker
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
-	"go.uber.org/zap"
-)
-
-var (
-	ErrUserIsBlocked = errors.New("user is blocked")
+	"github.com/ayupov-ayaz/anti-brute-force/internal/apperr"
+	"github.com/rs/zerolog/log"
 )
 
 type IPList interface {
@@ -16,14 +13,15 @@ type IPList interface {
 }
 
 type Checker interface {
-	Check(ctx context.Context, ip, login, pass string) error
+	AllowByLogin(ctx context.Context, login string) error
+	AllowByPassword(ctx context.Context, login string) error
+	AllowByIP(ctx context.Context, login string) error
 }
 
 type App struct {
 	whiteList IPList
 	blackList IPList
-	buckets   Checker
-	logger    *zap.Logger
+	checker   Checker
 }
 
 type Config func(app *App)
@@ -48,47 +46,55 @@ func WithBlackList(blackList IPList) Config {
 	}
 }
 
-func WithBuckets(buckets Checker) Config {
+func WithCheckers(checker Checker) Config {
 	return func(app *App) {
-		app.buckets = buckets
+		app.checker = checker
 	}
 }
 
-func WithLogger(logger *zap.Logger) Config {
-	return func(app *App) {
-		app.logger = logger
+func (a *App) authIsAllowed(ctx context.Context, ip, login, pass string) error {
+	if err := a.checker.AllowByLogin(ctx, login); err != nil {
+		return fmt.Errorf("check login: %w", err)
 	}
+
+	if err := a.checker.AllowByPassword(ctx, pass); err != nil {
+		return fmt.Errorf("check password: %w", err)
+	}
+
+	if err := a.checker.AllowByIP(ctx, ip); err != nil {
+		return fmt.Errorf("check ip: %w", err)
+	}
+
+	return nil
 }
 
 func (a *App) Check(ctx context.Context, ip, login, pass string) error {
-	logger := a.logger.Named("check").
-		With(zap.String("ip", ip),
-			zap.String("login", login))
+	logger := log.With().Str("ip", ip).Str("login", login).Logger()
 
 	ok, err := a.whiteList.Contains(ctx, ip)
 	if err != nil {
-		logger.Error("error while checking ip in white list", zap.Error(err))
+		logger.Error().Err(err).Msg("error while checking ip in white list")
 		return err
 	}
 
 	if ok {
-		a.logger.Info("ip is in white list")
+		log.Info().Msg("ip is in white list")
 		return nil
 	}
 
 	ok, err = a.blackList.Contains(ctx, ip)
 	if err != nil {
-		logger.Error("error while checking ip in black list", zap.Error(err))
+		log.Error().Err(err).Msg("error while checking ip in black list")
 		return err
 	}
 
 	if ok {
-		logger.Info("ip is in black list")
-		return ErrUserIsBlocked
+		log.Info().Msg("ip is in black list")
+		return apperr.ErrUserIsBlocked
 	}
 
-	if err := a.buckets.Check(ctx, ip, login, pass); err != nil {
-		logger.Error("error while checking buckets", zap.Error(err))
+	if err := a.authIsAllowed(ctx, ip, login, pass); err != nil {
+		log.Error().Err(err).Msg("error while checking auth is allowed")
 		return err
 	}
 

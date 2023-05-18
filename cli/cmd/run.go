@@ -3,6 +3,12 @@ package run
 import (
 	"fmt"
 
+	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/validator"
+
+	"github.com/ayupov-ayaz/anti-brute-force/internal/app/checker"
+
+	"github.com/ayupov-ayaz/anti-brute-force/cli/cmd/internal"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/server/http/handlers"
@@ -13,12 +19,8 @@ import (
 
 	redissdb "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
 
-	grpcserver "github.com/ayupov-ayaz/anti-brute-force/internal/server/grpc"
-
 	"github.com/ayupov-ayaz/anti-brute-force/config"
-	"github.com/ayupov-ayaz/anti-brute-force/internal/app/checker"
 	"github.com/ayupov-ayaz/anti-brute-force/internal/app/manager"
-	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/buckets"
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/iplist"
 	httpserver "github.com/ayupov-ayaz/anti-brute-force/internal/server/http"
 )
@@ -51,6 +53,11 @@ func run(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("parse config: %w", err)
 	}
 
+	valid := validator.New()
+	if err := valid.Validate(cfg); err != nil {
+		return fmt.Errorf("validate config: %w", err)
+	}
+
 	zLogger, err := logger.New(cfg.Logger)
 	if err != nil {
 		return fmt.Errorf("logger: %w", err)
@@ -65,38 +72,28 @@ func run(_ *cobra.Command, _ []string) error {
 
 	blackList := iplist.New(cfg.IPList.BlackListAddr, storage)
 	whiteList := iplist.New(cfg.IPList.WhiteListAddr, storage)
-	ipBuckets := buckets.New()
+	authLimiter := internal.NewAuthRateLimiter(cfg.Limiter, redisClient)
 
 	ipManager := manager.New(
-		manager.WithResetter(ipBuckets),
+		manager.WithResetter(authLimiter),
 		manager.WithBlackList(blackList),
-		manager.WithWhiteList(whiteList),
-		manager.WithLogger(zLogger))
+		manager.WithWhiteList(whiteList))
 
 	ipChecker := checker.New(
-		checker.WithBuckets(ipBuckets),
+		checker.WithCheckers(authLimiter),
 		checker.WithWhiteList(whiteList),
-		checker.WithBlackList(blackList),
-		checker.WithLogger(zLogger))
+		checker.WithBlackList(blackList))
 
 	port := cfg.Server.Port
-	if useGRPC {
-		server := grpcserver.New(
-			grpcserver.WithManager(ipManager),
-			grpcserver.WithChecker(ipChecker))
+	server := httpserver.New(
+		httpserver.WithChecker(handlers.NewChecker(ipChecker, valid)),
+		httpserver.WithManager(handlers.NewManager(ipManager, zLogger)))
 
-		if err := server.Start(port); err != nil {
-			return fmt.Errorf("grpc server: %w", err)
-		}
-	} else {
-		server := httpserver.New(
-			httpserver.WithChecker(handlers.NewChecker(ipChecker)),
-			httpserver.WithManager(handlers.NewManager(ipManager, zLogger)))
-
-		if err := server.Start(httpserver.NewFiber(), port); err != nil {
-			return fmt.Errorf("http server: %w", err)
-		}
+	if err := server.Start(httpserver.NewFiber(), port); err != nil {
+		return fmt.Errorf("http server: %w", err)
 	}
+
+	// todo: gRPC
 
 	return nil
 }
