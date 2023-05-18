@@ -59,7 +59,8 @@ func WithLogger(logger *zap.Logger) Config {
 }
 
 func joinIPMask(ip, mask string) string {
-	return ip + "/" + mask
+	// todo: разобраться как работать с маской
+	return ip
 }
 
 func (a *App) AddToBlackList(ctx context.Context, ip, mask string) error {

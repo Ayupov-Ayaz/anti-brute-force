@@ -39,7 +39,7 @@ Example: ./anti-brute-force run -p 8080 -g`,
 )
 
 func init() {
-	runCmd.Flags().IntVarP(&port, "port", "p", 8080, "port")
+	runCmd.Flags().IntVarP(&port, "port", "p", 0, "port")
 	runCmd.Flags().BoolVarP(&useGRPC, "use grpc", "g", false, "use grpc")
 }
 
