@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rs/zerolog/log"
+	"github.com/rs/zerolog"
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/apperr"
 
@@ -15,14 +15,14 @@ import (
 type LeakyBucketLimiter struct {
 	maxRequests    int64
 	refillInterval time.Duration
-	field          string
+	logger         zerolog.Logger
 }
 
-func NewLeakyBucketLimiter(maxRequests int64, refillInterval time.Duration, field string) *LeakyBucketLimiter {
+func NewLeakyBucketLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) *LeakyBucketLimiter {
 	return &LeakyBucketLimiter{
 		maxRequests:    maxRequests,
 		refillInterval: refillInterval,
-		field:          field,
+		logger:         logger,
 	}
 }
 
@@ -45,10 +45,11 @@ func (l *LeakyBucketLimiter) Allow(ctx context.Context, client *redis.Client, ke
 		return fmt.Errorf("failed to get ZCard result: %v", err)
 	}
 
-	log.Debug().Int64("count", count).Int64("max", l.maxRequests).Msg("")
+	l.logger.Debug().Int64("count", count).Int64("max", l.maxRequests).Msg("")
+
 	if count >= l.maxRequests {
-		return fmt.Errorf("%w blocked by field %s (%d/%d)",
-			apperr.ErrUserIsBlocked, l.field, count, l.maxRequests)
+		return fmt.Errorf("%w (bucket: %d/%d)",
+			apperr.ErrUserIsBlocked, count, l.maxRequests)
 	}
 
 	// Add current request to the bucket

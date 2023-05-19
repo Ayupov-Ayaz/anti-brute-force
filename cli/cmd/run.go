@@ -72,12 +72,13 @@ func run(_ *cobra.Command, _ []string) error {
 
 	blackList := iplist.New(cfg.IPList.BlackListAddr, storage)
 	whiteList := iplist.New(cfg.IPList.WhiteListAddr, storage)
-	authLimiter := internal.NewAuthRateLimiter(cfg.Limiter, redisClient)
+	authLimiter := internal.NewAuthRateLimiter(cfg.Limiter, redisClient, zLogger)
 
 	ipManager := manager.New(
 		manager.WithResetter(authLimiter),
 		manager.WithBlackList(blackList),
-		manager.WithWhiteList(whiteList))
+		manager.WithWhiteList(whiteList),
+		manager.WithLogger(zLogger))
 
 	ipChecker := checker.New(
 		checker.WithCheckers(authLimiter),

@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/rs/zerolog"
+
 	redis "github.com/go-redis/redis/v8"
 )
 
@@ -31,21 +33,28 @@ func WithRedisClient(client *redis.Client) Config {
 	}
 }
 
-func WithLoginLimiter(maxRequests int64, refillInterval time.Duration) Config {
+func subLoggerByLimiter(logger zerolog.Logger, limiter string) zerolog.Logger {
+	return logger.With().Str("limiter", limiter).Logger()
+}
+
+func WithLoginLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) Config {
 	return func(a *AuthRateLimiter) {
-		a.loginRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval, "login_limiter")
+		a.loginRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval,
+			subLoggerByLimiter(logger, "login"))
 	}
 }
 
-func WithPasswordLimiter(maxRequests int64, refillInterval time.Duration) Config {
+func WithPasswordLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) Config {
 	return func(a *AuthRateLimiter) {
-		a.passwordRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval, "password_limiter")
+		a.passwordRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval,
+			subLoggerByLimiter(logger, "password"))
 	}
 }
 
-func WithIPLimiter(maxRequests int64, refillInterval time.Duration) Config {
+func WithIPLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) Config {
 	return func(a *AuthRateLimiter) {
-		a.ipRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval, "ip_limiter")
+		a.ipRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval,
+			subLoggerByLimiter(logger, "ip"))
 	}
 }
 
