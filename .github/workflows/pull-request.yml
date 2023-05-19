@@ -34,3 +34,9 @@ jobs:
 
       - name: Run tests
         run: go test ./...
+
+      - name: Install golangci-lint
+        run: GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+
+      - name: Run linter
+        run: golangci-lint run
