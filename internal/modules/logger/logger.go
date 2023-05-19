@@ -17,5 +17,5 @@ func New(config Config) (zerolog.Logger, error) {
 		return zerolog.Logger{}, fmt.Errorf("parse log level: %w", err)
 	}
 
-	return zerolog.New(os.Stderr).Level(level).With().Timestamp().Logger(), nil
+	return zerolog.New(os.Stdout).Level(level).With().Timestamp().Logger(), nil
 }

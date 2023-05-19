@@ -83,7 +83,8 @@ func run(_ *cobra.Command, _ []string) error {
 	ipChecker := checker.New(
 		checker.WithCheckers(authLimiter),
 		checker.WithWhiteList(whiteList),
-		checker.WithBlackList(blackList))
+		checker.WithBlackList(blackList),
+		checker.WithLogger(zLogger))
 
 	port := cfg.Server.Port
 	server := httpserver.New(
