@@ -3,7 +3,7 @@ package handlers
 import (
 	"context"
 
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 
 	fiber "github.com/gofiber/fiber/v2"
 )
@@ -18,10 +18,10 @@ type Manager interface {
 
 type ManagerHTTP struct {
 	manager Manager
-	logger  *zap.Logger
+	logger  zerolog.Logger
 }
 
-func NewManager(app Manager, logger *zap.Logger) *ManagerHTTP {
+func NewManager(app Manager, logger zerolog.Logger) *ManagerHTTP {
 	return &ManagerHTTP{
 		manager: app,
 		logger:  logger,
@@ -46,9 +46,7 @@ func (m *ManagerHTTP) addToList(ctx *fiber.Ctx, addToList AddToList) error {
 	var model IP
 
 	if err := ctx.BodyParser(&model); err != nil {
-		m.logger.Error("parse body failed",
-			zap.ByteString("body", ctx.Body()),
-			zap.Error(err))
+		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
 		return err
 	}
 
@@ -73,9 +71,7 @@ func (m *ManagerHTTP) removeFromList(ctx *fiber.Ctx, remove RemoveFromList) erro
 	var model IP
 
 	if err := ctx.BodyParser(&model); err != nil {
-		m.logger.Error("parse body failed",
-			zap.ByteString("body", ctx.Body()),
-			zap.Error(err))
+		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
 		return err
 	}
 
@@ -97,9 +93,7 @@ func (m *ManagerHTTP) removeFromWhiteList(ctx *fiber.Ctx) error {
 func (m *ManagerHTTP) reset(ctx *fiber.Ctx) error {
 	var auth Auth
 	if err := ctx.BodyParser(&auth); err != nil {
-		m.logger.Error("parse body failed",
-			zap.ByteString("body", ctx.Body()),
-			zap.Error(err))
+		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
 		return err
 	}
 

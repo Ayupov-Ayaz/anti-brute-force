@@ -2,24 +2,20 @@ package logger
 
 import (
 	"fmt"
+	"os"
 
-	"go.uber.org/zap"
+	"github.com/rs/zerolog"
 )
 
 type Config interface {
 	Level() string
 }
 
-func New(config Config) (*zap.Logger, error) {
-	logCfg := zap.NewProductionConfig()
-	if err := logCfg.Level.UnmarshalText([]byte(config.Level())); err != nil {
-		return nil, fmt.Errorf("unmarshal log level failed: %w, level=%s", err, config.Level())
-	}
-
-	l, err := logCfg.Build()
+func New(config Config) (zerolog.Logger, error) {
+	level, err := zerolog.ParseLevel(config.Level())
 	if err != nil {
-		return nil, err
+		return zerolog.Logger{}, fmt.Errorf("parse log level: %w", err)
 	}
 
-	return l, nil
+	return zerolog.New(os.Stdout).Level(level).With().Timestamp().Logger(), nil
 }
