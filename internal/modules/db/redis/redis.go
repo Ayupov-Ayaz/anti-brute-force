@@ -2,19 +2,11 @@ package redisdb
 
 import (
 	"context"
+	"fmt"
 	"time"
-
-	"github.com/alicebob/miniredis"
 
 	redis "github.com/go-redis/redis/v8"
 )
-
-func ping(cli *redis.Client) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	return cli.Ping(ctx).Err()
-}
 
 func NewRedisClient(addr, user, pass string) (*redis.Client, error) {
 	cli := redis.NewClient(&redis.Options{
@@ -23,25 +15,11 @@ func NewRedisClient(addr, user, pass string) (*redis.Client, error) {
 		Password: pass,
 	})
 
-	if err := ping(cli); err != nil {
-		return nil, err
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
-	return cli, nil
-}
-
-func NewMiniRedisClient() (*redis.Client, error) {
-	mini, err := miniredis.Run()
-	if err != nil {
-		return nil, err
-	}
-
-	cli := redis.NewClient(&redis.Options{
-		Addr: mini.Addr(),
-	})
-
-	if err := ping(cli); err != nil {
-		return nil, err
+	if err := cli.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis ping: %w", err)
 	}
 
 	return cli, nil
