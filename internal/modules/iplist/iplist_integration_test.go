@@ -7,7 +7,7 @@ import (
 	redis "github.com/go-redis/redis/v8"
 
 	redisstore "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
-	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
+	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage"
 	"github.com/stretchr/testify/require"
 )
 

@@ -15,7 +15,7 @@ import (
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/logger"
 
-	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
+	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage"
 
 	redissdb "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
 

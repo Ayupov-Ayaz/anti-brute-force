@@ -1,10 +1,35 @@
 package storage
 
-import "context"
+import (
+	"context"
 
-//go:generate mockgen -destination=./mock/storage.go -package=storage github.com/ayupov-ayaz/anti-brute-force/internal/storage Storage
-type Storage interface {
-	Save(ctx context.Context, list, ip string, value interface{}) error
-	Load(ctx context.Context, list, ip string) (string, error)
-	Remove(ctx context.Context, list, ip string) error
+	redis "github.com/go-redis/redis/v8"
+)
+
+type Redis interface {
+	HSet(ctx context.Context, key string, value ...interface{}) *redis.IntCmd
+	HGet(ctx context.Context, key, field string) *redis.StringCmd
+	HDel(ctx context.Context, key string, fields ...string) *redis.IntCmd
+}
+
+type Storage struct {
+	redis Redis
+}
+
+func New(redis Redis) *Storage {
+	return &Storage{
+		redis: redis,
+	}
+}
+
+func (s *Storage) Save(ctx context.Context, key, field string, val interface{}) error {
+	return s.redis.HSet(ctx, key, field, val).Err()
+}
+
+func (s *Storage) Load(ctx context.Context, key, field string) (string, error) {
+	return s.redis.HGet(ctx, key, field).Result()
+}
+
+func (s *Storage) Remove(ctx context.Context, key, field string) error {
+	return s.redis.HDel(ctx, key, field).Err()
 }
