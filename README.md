@@ -7,3 +7,7 @@
 * tests http
 * reset buckets
 * docker-compose
+* grpc
+* tests grpc
+* heath checker
+* graceful shutdown (http, grpc)

@@ -9,12 +9,6 @@ import (
 	redis "github.com/go-redis/redis/v8"
 )
 
-type Config interface {
-	Address() string
-	Username() string
-	Password() string
-}
-
 func ping(cli *redis.Client) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -22,11 +16,11 @@ func ping(cli *redis.Client) error {
 	return cli.Ping(ctx).Err()
 }
 
-func NewRedisClient(config Config) (*redis.Client, error) {
+func NewRedisClient(addr, user, pass string) (*redis.Client, error) {
 	cli := redis.NewClient(&redis.Options{
-		Addr:     config.Address(),
-		Username: config.Username(),
-		Password: config.Password(),
+		Addr:     addr,
+		Username: user,
+		Password: pass,
 	})
 
 	if err := ping(cli); err != nil {

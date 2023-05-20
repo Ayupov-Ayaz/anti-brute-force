@@ -63,7 +63,7 @@ func run(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("logger: %w", err)
 	}
 
-	redisClient, err := redissdb.NewRedisClient(cfg.Redis)
+	redisClient, err := redissdb.NewRedisClient(cfg.Redis.Addr, cfg.Redis.User, cfg.Redis.Pass)
 	if err != nil {
 		return fmt.Errorf("redis client: %w", err)
 	}
