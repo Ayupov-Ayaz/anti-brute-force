@@ -2,59 +2,27 @@ package limiter
 
 import (
 	"context"
-	"time"
-
-	"github.com/rs/zerolog"
 
 	redis "github.com/go-redis/redis/v8"
 )
 
+type LeakyBucketLimiter interface {
+	Allow(ctx context.Context, client *redis.Client, key string) error
+}
+
 type AuthRateLimiter struct {
 	client              *redis.Client
-	loginRateLimiter    *LeakyBucketLimiter
-	passwordRateLimiter *LeakyBucketLimiter
-	ipRateLimiter       *LeakyBucketLimiter
+	loginRateLimiter    LeakyBucketLimiter
+	passwordRateLimiter LeakyBucketLimiter
+	ipRateLimiter       LeakyBucketLimiter
 }
 
-type Config func(*AuthRateLimiter)
-
-func NewAuthRateLimiter(configs ...Config) *AuthRateLimiter {
-	rt := &AuthRateLimiter{}
-	for _, config := range configs {
-		config(rt)
-	}
-
-	return rt
-}
-
-func WithRedisClient(client *redis.Client) Config {
-	return func(a *AuthRateLimiter) {
-		a.client = client
-	}
-}
-
-func subLoggerByLimiter(logger zerolog.Logger, limiter string) zerolog.Logger {
-	return logger.With().Str("limiter", limiter).Logger()
-}
-
-func WithLoginLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) Config {
-	return func(a *AuthRateLimiter) {
-		a.loginRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval,
-			subLoggerByLimiter(logger, "login"))
-	}
-}
-
-func WithPasswordLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) Config {
-	return func(a *AuthRateLimiter) {
-		a.passwordRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval,
-			subLoggerByLimiter(logger, "password"))
-	}
-}
-
-func WithIPLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) Config {
-	return func(a *AuthRateLimiter) {
-		a.ipRateLimiter = NewLeakyBucketLimiter(maxRequests, refillInterval,
-			subLoggerByLimiter(logger, "ip"))
+func New(redis *redis.Client, login, pass, ip LeakyBucketLimiter) *AuthRateLimiter {
+	return &AuthRateLimiter{
+		client:              redis,
+		loginRateLimiter:    login,
+		passwordRateLimiter: pass,
+		ipRateLimiter:       ip,
 	}
 }
 

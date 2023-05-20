@@ -1,4 +1,4 @@
-package limiter
+package bucket
 
 import (
 	"context"
@@ -18,7 +18,7 @@ type LeakyBucketLimiter struct {
 	logger         zerolog.Logger
 }
 
-func NewLeakyBucketLimiter(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) *LeakyBucketLimiter {
+func New(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger) *LeakyBucketLimiter {
 	return &LeakyBucketLimiter{
 		maxRequests:    maxRequests,
 		refillInterval: refillInterval,
