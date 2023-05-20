@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/rs/zerolog"
+
 	"github.com/ayupov-ayaz/anti-brute-force/internal/apperr"
 
 	fiber "github.com/gofiber/fiber/v2"
@@ -20,12 +22,14 @@ type Validator interface {
 type CheckerHTTP struct {
 	app       Checker
 	validator Validator
+	logger    zerolog.Logger
 }
 
-func NewChecker(app Checker, validator Validator) *CheckerHTTP {
+func NewChecker(app Checker, validator Validator, logger zerolog.Logger) *CheckerHTTP {
 	return &CheckerHTTP{
 		app:       app,
 		validator: validator,
+		logger:    logger,
 	}
 }
 
@@ -37,12 +41,14 @@ func (c *CheckerHTTP) Register(app *fiber.App) {
 }
 
 func (c *CheckerHTTP) check(ctx *fiber.Ctx) error {
-	var auth Auth
+	var auth CheckAuth
 	if err := ctx.BodyParser(&auth); err != nil {
+		c.logger.Error().Err(err).Msg("failed to parse request body")
 		return err
 	}
 
 	if err := c.validator.Validate(auth); err != nil {
+		c.logger.Error().Err(err).Msg("failed to validate request body")
 		return err
 	}
 
@@ -54,11 +60,17 @@ func (c *CheckerHTTP) check(ctx *fiber.Ctx) error {
 			status = fiber.StatusForbidden
 			allowed = false
 		} else {
+			c.logger.Error().Err(err).Msg("failed to check user")
 			return err
 		}
 	}
 
-	return ctx.Status(status).JSON(Response{Ok: allowed})
+	if err := ctx.Status(status).JSON(Response{Ok: allowed}); err != nil {
+		c.logger.Error().Err(err).Msg("failed to send response")
+		return err
+	}
+
+	return nil
 }
 
 func (c *CheckerHTTP) reset(ctx *fiber.Ctx) error {
