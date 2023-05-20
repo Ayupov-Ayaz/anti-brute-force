@@ -7,7 +7,7 @@ import (
 	fiber "github.com/gofiber/fiber/v2"
 )
 
-func ErrorHandler() fiber.ErrorHandler {
+func errorHandler() fiber.ErrorHandler {
 	return func(ctx *fiber.Ctx, err error) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(struct {
 			Error string `json:"error"`
@@ -29,7 +29,7 @@ func useRecover() fiber.Handler {
 
 func NewFiber() *fiber.App {
 	app := fiber.New(fiber.Config{
-		ErrorHandler:   ErrorHandler(),
+		ErrorHandler:   errorHandler(),
 		AppName:        "anti-brute-force",
 		RequestMethods: []string{fiber.MethodPost, fiber.MethodDelete},
 	})
