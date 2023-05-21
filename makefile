@@ -16,3 +16,7 @@ test:
 .PHONY: lint
 lint:
 	golangci-lint run
+
+.PHONY: docker-run
+docker-run:
+	docker-compose up -d
