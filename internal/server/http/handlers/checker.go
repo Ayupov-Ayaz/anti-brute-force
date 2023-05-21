@@ -37,11 +37,10 @@ func (c *CheckerHTTP) Register(app *fiber.App) {
 	group := app.Group("/checker")
 
 	group.Post("/check", c.check)
-	group.Post("/reset", c.reset)
 }
 
 func (c *CheckerHTTP) check(ctx *fiber.Ctx) error {
-	var auth CheckAuth
+	var auth CheckAuthRequest
 	if err := ctx.BodyParser(&auth); err != nil {
 		c.logger.Error().Err(err).Msg("failed to parse request body")
 		return err
@@ -71,8 +70,4 @@ func (c *CheckerHTTP) check(ctx *fiber.Ctx) error {
 	}
 
 	return nil
-}
-
-func (c *CheckerHTTP) reset(ctx *fiber.Ctx) error {
-	return errors.New("reset not implemented")
 }

@@ -6,7 +6,6 @@
 ### Required
 * fix ip+mask (white / black list)
 * tests http
-* reset buckets
 ### Optional:
 * grpc
 * tests grpc

@@ -3,6 +3,7 @@ package bucket
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -39,7 +40,11 @@ func (l *LeakyBucketLimiter) Allow(ctx context.Context, client *redis.Client, ke
 	}
 
 	// Get the result of ZCard command
-	zCardCmd := cmds[0].(*redis.IntCmd)
+	zCardCmd, ok := cmds[0].(*redis.IntCmd)
+	if !ok {
+		return fmt.Errorf("failed to cast ZCard command result to IntCmd")
+	}
+
 	count := zCardCmd.Val()
 	if err != nil {
 		return fmt.Errorf("failed to get ZCard result: %v", err)
@@ -64,4 +69,11 @@ func (l *LeakyBucketLimiter) Allow(ctx context.Context, client *redis.Client, ke
 	}
 
 	return nil
+}
+
+func (l *LeakyBucketLimiter) Reset(ctx context.Context, client *redis.Client, key string) error {
+	max := strconv.FormatInt(time.Now().Unix(), 10)
+	count, err := client.ZRemRangeByScore(ctx, key, "-inf", max).Result()
+	l.logger.Debug().Int64("count", count).Str("key", key).Msg("reset")
+	return err
 }
