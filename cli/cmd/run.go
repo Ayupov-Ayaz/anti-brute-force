@@ -15,7 +15,7 @@ import (
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/logger"
 
-	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
+	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage"
 
 	redissdb "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
 
@@ -63,7 +63,7 @@ func run(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("logger: %w", err)
 	}
 
-	redisClient, err := redissdb.NewRedisClient(cfg.Redis)
+	redisClient, err := redissdb.NewRedisClient(cfg.Redis.Addr, cfg.Redis.User, cfg.Redis.Pass)
 	if err != nil {
 		return fmt.Errorf("redis client: %w", err)
 	}
@@ -72,30 +72,17 @@ func run(_ *cobra.Command, _ []string) error {
 
 	blackList := iplist.New(cfg.IPList.BlackListAddr, storage)
 	whiteList := iplist.New(cfg.IPList.WhiteListAddr, storage)
+
 	authLimiter := internal.NewAuthRateLimiter(cfg.Limiter, redisClient, zLogger)
 
-	ipManager := manager.New(
-		manager.WithResetter(authLimiter),
-		manager.WithBlackList(blackList),
-		manager.WithWhiteList(whiteList),
-		manager.WithLogger(zLogger))
+	managerHandler := handlers.NewManager(manager.New(whiteList, blackList, authLimiter), valid, zLogger)
+	checkerHandler := handlers.NewChecker(checker.New(whiteList, blackList, authLimiter), valid, zLogger)
 
-	ipChecker := checker.New(
-		checker.WithCheckers(authLimiter),
-		checker.WithWhiteList(whiteList),
-		checker.WithBlackList(blackList),
-		checker.WithLogger(zLogger))
+	server := httpserver.New(managerHandler, checkerHandler, zLogger)
 
-	port := cfg.Server.Port
-	server := httpserver.New(
-		httpserver.WithChecker(handlers.NewChecker(ipChecker, valid)),
-		httpserver.WithManager(handlers.NewManager(ipManager, zLogger)))
-
-	if err := server.Start(httpserver.NewFiber(), port); err != nil {
+	if err := server.Start(httpserver.NewFiber(), cfg.Server.Port); err != nil {
 		return fmt.Errorf("http server: %w", err)
 	}
-
-	// todo: gRPC
 
 	return nil
 }

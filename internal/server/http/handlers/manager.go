@@ -17,14 +17,16 @@ type Manager interface {
 }
 
 type ManagerHTTP struct {
-	manager Manager
-	logger  zerolog.Logger
+	manager   Manager
+	validator Validator
+	logger    zerolog.Logger
 }
 
-func NewManager(app Manager, logger zerolog.Logger) *ManagerHTTP {
+func NewManager(app Manager, validator Validator, logger zerolog.Logger) *ManagerHTTP {
 	return &ManagerHTTP{
-		manager: app,
-		logger:  logger,
+		manager:   app,
+		validator: validator,
+		logger:    logger,
 	}
 }
 
@@ -42,15 +44,32 @@ func (m *ManagerHTTP) Register(app *fiber.App) {
 
 type AddToList func(ctx context.Context, ip, mask string) error
 
-func (m *ManagerHTTP) addToList(ctx *fiber.Ctx, addToList AddToList) error {
+func (m *ManagerHTTP) parseIP(ctx *fiber.Ctx) (ip string, mask string, err error) {
 	var model IP
 
 	if err := ctx.BodyParser(&model); err != nil {
 		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
+		return "", "", err
+	}
+
+	if err := m.validator.Validate(model); err != nil {
+		m.logger.Error().Err(err).Str("mask", model.Mask).
+			Str("ip", model.IP).Msg("validate ip failed")
+		return "", "", err
+	}
+
+	return model.IP, model.Mask, nil
+}
+
+func (m *ManagerHTTP) addToList(ctx *fiber.Ctx, addToList AddToList) error {
+	ip, mask, err := m.parseIP(ctx)
+	if err != nil {
 		return err
 	}
 
-	if err := addToList(ctx.Context(), model.IP, model.Mask); err != nil {
+	if err := addToList(ctx.Context(), ip, mask); err != nil {
+		m.logger.Error().Err(err).Str("mask", mask).
+			Str("ip", ip).Msg("add to list failed")
 		return err
 	}
 
@@ -68,14 +87,14 @@ func (m *ManagerHTTP) addToWhiteList(ctx *fiber.Ctx) error {
 type RemoveFromList func(ctx context.Context, ip, mask string) error
 
 func (m *ManagerHTTP) removeFromList(ctx *fiber.Ctx, remove RemoveFromList) error {
-	var model IP
-
-	if err := ctx.BodyParser(&model); err != nil {
-		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
+	ip, mask, err := m.parseIP(ctx)
+	if err != nil {
 		return err
 	}
 
-	if err := remove(ctx.Context(), model.IP, model.Mask); err != nil {
+	if err := remove(ctx.Context(), ip, mask); err != nil {
+		m.logger.Error().Err(err).Str("mask", mask).
+			Str("ip", ip).Msg("remove from list failed")
 		return err
 	}
 
@@ -91,15 +110,28 @@ func (m *ManagerHTTP) removeFromWhiteList(ctx *fiber.Ctx) error {
 }
 
 func (m *ManagerHTTP) reset(ctx *fiber.Ctx) error {
-	var auth Auth
-	if err := ctx.BodyParser(&auth); err != nil {
+	var model Auth
+
+	if err := ctx.BodyParser(&model); err != nil {
 		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
 		return err
 	}
 
-	if err := m.manager.Reset(ctx.Context(), auth.Login, auth.Pass); err != nil {
+	if err := m.validator.Validate(model); err != nil {
+		m.logger.Error().Err(err).Str("login", model.Login).
+			Str("pass", model.Pass).Msg("validate auth failed")
 		return err
 	}
 
-	return ctx.SendStatus(fiber.StatusOK)
+	if err := m.manager.Reset(ctx.Context(), model.Login, model.Pass); err != nil {
+		m.logger.Error().Err(err).Str("login", model.Login).Msg("reset failed")
+		return err
+	}
+
+	if err := ctx.SendStatus(fiber.StatusOK); err != nil {
+		m.logger.Error().Err(err).Msg("send status failed")
+		return err
+	}
+
+	return nil
 }

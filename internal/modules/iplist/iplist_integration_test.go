@@ -2,17 +2,40 @@ package iplist
 
 import (
 	"context"
+	"fmt"
 	"testing"
+	"time"
+
+	"github.com/alicebob/miniredis"
 
 	redis "github.com/go-redis/redis/v8"
 
-	redisstore "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
-	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/redis"
+	redisstorage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage"
 	"github.com/stretchr/testify/require"
 )
 
+func newMiniRedisClient() (*redis.Client, error) {
+	mini, err := miniredis.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	cli := redis.NewClient(&redis.Options{
+		Addr: mini.Addr(),
+	})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := cli.Ping(ctx).Err(); err != nil {
+		return nil, fmt.Errorf("redis ping: %w", err)
+	}
+
+	return cli, nil
+}
+
 func newList(t *testing.T) (*IPList, *redis.Client) {
-	db, err := redisstore.NewMiniRedisClient()
+	db, err := newMiniRedisClient()
 	require.NoError(t, err)
 
 	storage := redisstorage.New(db)

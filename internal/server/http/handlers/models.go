@@ -3,7 +3,11 @@ package handlers
 type Auth struct {
 	Login string `json:"login" validate:"required"`
 	Pass  string `json:"password" validate:"required"`
-	IP    string `json:"ip" validate:"required"`
+}
+
+type CheckAuth struct {
+	Auth
+	IP string `json:"ip" validate:"required"`
 }
 
 type IP struct {

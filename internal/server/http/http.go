@@ -4,37 +4,27 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/rs/zerolog"
+
 	"github.com/ayupov-ayaz/anti-brute-force/internal/server/http/handlers"
 
 	fiber "github.com/gofiber/fiber/v2"
 )
 
+type shutdown func() error
+
 type Server struct {
 	manager  *handlers.ManagerHTTP
 	checker  *handlers.CheckerHTTP
-	shutdown func() error
+	shutdown shutdown
+	logger   zerolog.Logger
 }
 
-type Config func(s *Server)
-
-func New(configs ...Config) *Server {
-	s := &Server{}
-	for _, config := range configs {
-		config(s)
-	}
-
-	return s
-}
-
-func WithManager(manager *handlers.ManagerHTTP) Config {
-	return func(s *Server) {
-		s.manager = manager
-	}
-}
-
-func WithChecker(checker *handlers.CheckerHTTP) Config {
-	return func(s *Server) {
-		s.checker = checker
+func New(manager *handlers.ManagerHTTP, checker *handlers.CheckerHTTP, logger zerolog.Logger) *Server {
+	return &Server{
+		manager: manager,
+		checker: checker,
+		logger:  logger,
 	}
 }
 

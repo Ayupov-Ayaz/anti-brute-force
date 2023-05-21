@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	storage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage/mock"
+	storage "github.com/ayupov-ayaz/anti-brute-force/internal/modules/iplist/mock"
 	"github.com/golang/mock/gomock"
 )
 

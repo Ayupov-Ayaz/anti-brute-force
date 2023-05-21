@@ -5,18 +5,23 @@ import (
 	"errors"
 
 	redis "github.com/go-redis/redis/v8"
-
-	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/storage"
 )
 
 const value = "+"
 
-type IPList struct {
-	addr    string
-	storage storage.Storage
+//go:generate mockgen -destination=./mock/storage.go -package=storage github.com/ayupov-ayaz/anti-brute-force/internal/modules/iplist Storage
+type Storage interface {
+	Save(ctx context.Context, key, field string, val interface{}) error
+	Load(ctx context.Context, key, field string) (string, error)
+	Remove(ctx context.Context, key, field string) error
 }
 
-func New(addr string, storage storage.Storage) *IPList {
+type IPList struct {
+	addr    string
+	storage Storage
+}
+
+func New(addr string, storage Storage) *IPList {
 	return &IPList{
 		addr:    addr,
 		storage: storage,
