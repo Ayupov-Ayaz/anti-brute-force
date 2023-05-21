@@ -3,10 +3,11 @@
 ### [Task](task.md)
 
 ## Todo
+### Required
 * fix ip+mask (white / black list)
 * tests http
 * reset buckets
-* docker-compose
+### Optional:
 * grpc
 * tests grpc
 * heath checker

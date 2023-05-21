@@ -7,12 +7,8 @@ import (
 	"github.com/rs/zerolog"
 )
 
-type Config interface {
-	Level() string
-}
-
-func New(config Config) (zerolog.Logger, error) {
-	level, err := zerolog.ParseLevel(config.Level())
+func New(logLevel string) (zerolog.Logger, error) {
+	level, err := zerolog.ParseLevel(logLevel)
 	if err != nil {
 		return zerolog.Logger{}, fmt.Errorf("parse log level: %w", err)
 	}
