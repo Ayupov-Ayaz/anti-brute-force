@@ -1,11 +1,11 @@
 package config
 
 import (
-	limitercfg "github.com/ayupov-ayaz/anti-brute-force/config/limiter"
-	listcfg "github.com/ayupov-ayaz/anti-brute-force/config/list"
-	loggercfg "github.com/ayupov-ayaz/anti-brute-force/config/logger"
-	rediscfg "github.com/ayupov-ayaz/anti-brute-force/config/redis"
-	servercfg "github.com/ayupov-ayaz/anti-brute-force/config/server"
+	limitercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/limiter"
+	listcfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/list"
+	loggercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/logger"
+	rediscfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/redis"
+	servercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/server"
 )
 
 type Config struct {

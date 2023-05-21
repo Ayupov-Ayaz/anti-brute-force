@@ -1,7 +1,7 @@
 package internal
 
 import (
-	limitercfg "github.com/ayupov-ayaz/anti-brute-force/config/limiter"
+	limitercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/limiter"
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/limiter"
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/limiter/bucket"
 	redis "github.com/go-redis/redis/v8"

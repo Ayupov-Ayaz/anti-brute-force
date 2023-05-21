@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	servercfg "github.com/ayupov-ayaz/anti-brute-force/config/server"
+	servercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/server"
 	"github.com/stretchr/testify/require"
 )
 

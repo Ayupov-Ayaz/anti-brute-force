@@ -19,7 +19,7 @@ import (
 
 	redissdb "github.com/ayupov-ayaz/anti-brute-force/internal/modules/db/redis"
 
-	"github.com/ayupov-ayaz/anti-brute-force/config"
+	"github.com/ayupov-ayaz/anti-brute-force/cli/config"
 	"github.com/ayupov-ayaz/anti-brute-force/internal/app/manager"
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/iplist"
 	httpserver "github.com/ayupov-ayaz/anti-brute-force/internal/server/http"
@@ -58,7 +58,7 @@ func run(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("validate config: %w", err)
 	}
 
-	zLogger, err := logger.New(cfg.Logger)
+	zLogger, err := logger.New(cfg.Logger.Level)
 	if err != nil {
 		return fmt.Errorf("logger: %w", err)
 	}
