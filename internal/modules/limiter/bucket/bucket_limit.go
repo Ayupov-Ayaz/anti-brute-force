@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/rs/zerolog"
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/apperr"
@@ -29,23 +31,19 @@ func New(maxRequests int64, refillInterval time.Duration, logger zerolog.Logger)
 
 func (l *LeakyBucketLimiter) Allow(ctx context.Context, client *redis.Client, key string) error {
 	pipe := client.Pipeline()
-	//получаем количество запросов в бакете
-
 	pipe.ZCard(ctx, key)
-	//defer pipe.Exec(ctx)
 
 	cmds, err := pipe.Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to execute Redis pipeline: %v", err)
 	}
 
-	// Get the result of ZCard command
 	zCardCmd, ok := cmds[0].(*redis.IntCmd)
 	if !ok {
 		return fmt.Errorf("failed to cast ZCard command result to IntCmd")
 	}
 
-	count := zCardCmd.Val()
+	count, err := zCardCmd.Result()
 	if err != nil {
 		return fmt.Errorf("failed to get ZCard result: %v", err)
 	}
@@ -58,9 +56,8 @@ func (l *LeakyBucketLimiter) Allow(ctx context.Context, client *redis.Client, ke
 	}
 
 	// Add current request to the bucket
-	score := float64(time.Now().Unix())
-	// Add current request to the bucket
-	pipe.ZAdd(ctx, key, &redis.Z{Score: score, Member: score})
+	score := time.Now().Unix()
+	pipe.ZAdd(ctx, key, &redis.Z{Score: float64(score), Member: uuid.New()})
 	pipe.Expire(ctx, key, l.refillInterval)
 
 	_, err = pipe.Exec(ctx)
