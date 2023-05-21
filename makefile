@@ -17,6 +17,10 @@ test:
 lint:
 	golangci-lint run
 
+.PHONY: docker-run-redis
+docker-run-redis:
+	docker-compose up -d redis
+
 .PHONY: docker-run
 docker-run:
 	docker-compose up -d

@@ -1,6 +1,6 @@
 package listcfg
 
 type IPList struct {
-	BlackListAddr string `mapstructure:"blacklist_addr" validate:"required"`
-	WhiteListAddr string `mapstructure:"whitelist_addr" validate:"required"`
+	BlackListAddr string `envconfig:"BLACK_LIST_ADDR" validate:"required"`
+	WhiteListAddr string `envconfig:"WHITE_LIST_ADDR" validate:"required"`
 }

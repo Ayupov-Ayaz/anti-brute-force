@@ -3,6 +3,8 @@ version: '3'
 services:
   app:
     container_name: anti-brute-force
+    env_file:
+      - .env
     build:
       context: .
       dockerfile: Dockerfile

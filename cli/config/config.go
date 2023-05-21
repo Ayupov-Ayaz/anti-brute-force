@@ -9,9 +9,9 @@ import (
 )
 
 type Config struct {
-	Server  servercfg.Server   `mapstructure:"server" validate:"required"`
-	Redis   rediscfg.Redis     `mapstructure:"redis" validate:"required"`
-	Logger  loggercfg.Logger   `mapstructure:"logger" validate:"required"`
-	IPList  listcfg.IPList     `mapstructure:"ip_list" validate:"required"`
-	Limiter limitercfg.Limiter `mapstructure:"limiter" validate:"required"`
+	Server  servercfg.Server   `envconfig:"SERVER" validate:"required"`
+	Redis   rediscfg.Redis     `envconfig:"REDIS" validate:"required"`
+	Logger  loggercfg.Logger   `envconfig:"LOGGER" validate:"required"`
+	IPList  listcfg.IPList     `envconfig:"IP_LIST" validate:"required"`
+	Limiter limitercfg.Limiter `envconfig:"LIMITER" validate:"required"`
 }

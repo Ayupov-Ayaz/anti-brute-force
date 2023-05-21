@@ -3,12 +3,12 @@ package limitercfg
 import "time"
 
 type ValueLimiter struct {
-	Count    int64         `mapstructure:"count" validate:"required"`
-	Interval time.Duration `mapstructure:"interval" validate:"required"`
+	Count    int64         `envconfig:"COUNT" validate:"required"`
+	Interval time.Duration `envconfig:"INTERVAL" validate:"required"`
 }
 
 type Limiter struct {
-	Login    ValueLimiter `mapstructure:"login" validate:"required"`
-	Password ValueLimiter `mapstructure:"password" validate:"required"`
-	IP       ValueLimiter `mapstructure:"ip" validate:"required"`
+	Login    ValueLimiter `envconfig:"LOGIN" validate:"required"`
+	Password ValueLimiter `envconfig:"PASSWORD" validate:"required"`
+	IP       ValueLimiter `envconfig:"IP" validate:"required"`
 }

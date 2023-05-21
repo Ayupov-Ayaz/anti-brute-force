@@ -10,6 +10,5 @@ RUN go mod download \
 FROM scratch
 
 COPY --from=builder /app/main .
-COPY .config.yaml .
 
 CMD ["./main"]

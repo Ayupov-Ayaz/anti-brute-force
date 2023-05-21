@@ -1,7 +1,7 @@
 package rediscfg
 
 type Redis struct {
-	Addr string `mapstructure:"addr" validate:"required"`
-	Pass string `mapstructure:"password"`
-	User string `mapstructure:"user"`
+	Addr string `envconfig:"addr" validate:"required"`
+	Pass string `envconfig:"password"`
+	User string `envconfig:"user"`
 }

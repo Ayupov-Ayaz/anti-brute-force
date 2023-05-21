@@ -1,6 +1,6 @@
 package servercfg
 
 type Server struct {
-	Port    int  `mapstructure:"port" validate:"required"`
-	UseGRPC bool `mapstructure:"use_grpc"`
+	Port    int  `envconfig:"PORT" validate:"required"`
+	UseGRPC bool `envconfig:"USE_GRPC"`
 }
