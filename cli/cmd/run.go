@@ -3,6 +3,8 @@ package run
 import (
 	"fmt"
 
+	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/ip"
+
 	"github.com/ayupov-ayaz/anti-brute-force/internal/modules/validator"
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/app/checker"
@@ -74,9 +76,9 @@ func run(_ *cobra.Command, _ []string) error {
 	whiteList := iplist.New(cfg.IPList.WhiteListAddr, storage)
 
 	authLimiter := internal.NewAuthRateLimiter(cfg.Limiter, redisClient, zLogger)
-
-	managerHandler := handlers.NewManager(manager.New(whiteList, blackList, authLimiter), valid, zLogger)
-	checkerHandler := handlers.NewChecker(checker.New(whiteList, blackList, authLimiter), valid, zLogger)
+	ipService := ip.New()
+	managerHandler := handlers.NewManager(manager.New(whiteList, blackList, ipService, authLimiter), valid, zLogger)
+	checkerHandler := handlers.NewChecker(checker.New(whiteList, blackList, ipService, authLimiter), valid, zLogger)
 
 	server := httpserver.New(managerHandler, checkerHandler, zLogger)
 

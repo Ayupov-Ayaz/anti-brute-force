@@ -4,7 +4,6 @@
 
 ## Todo
 ### Required
-* fix ip+mask (white / black list)
 * tests http
 ### Optional:
 * grpc

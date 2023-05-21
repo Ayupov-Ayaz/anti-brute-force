@@ -3,6 +3,8 @@ package checker
 import (
 	"context"
 	"fmt"
+	"net"
+	"strconv"
 
 	"github.com/ayupov-ayaz/anti-brute-force/internal/apperr"
 )
@@ -17,17 +19,24 @@ type Checker interface {
 	AllowByIP(ctx context.Context, login string) error
 }
 
+type IPService interface {
+	ParseIP(ip string) (net.IP, error)
+	IPToUint32(ip net.IP) uint32
+}
+
 type App struct {
 	whiteList IPList
 	blackList IPList
 	checker   Checker
+	ip        IPService
 }
 
-func New(whiteList, blackList IPList, checker Checker) *App {
+func New(whiteList, blackList IPList, ip IPService, checker Checker) *App {
 	return &App{
 		whiteList: whiteList,
 		blackList: blackList,
 		checker:   checker,
+		ip:        ip,
 	}
 }
 
@@ -47,7 +56,21 @@ func (a *App) authIsAllowed(ctx context.Context, ip, login, pass string) error {
 	return nil
 }
 
-func (a *App) Check(ctx context.Context, ip, login, pass string) error {
+func (a *App) parseIPKey(ip string) (string, error) {
+	parsedIP, err := a.ip.ParseIP(ip)
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.FormatUint(uint64(a.ip.IPToUint32(parsedIP)), 10), nil
+}
+
+func (a *App) Check(ctx context.Context, dirtyIP, login, pass string) error {
+	ip, err := a.parseIPKey(dirtyIP)
+	if err != nil {
+		return err
+	}
+
 	ok, err := a.whiteList.Contains(ctx, ip)
 	if err != nil {
 		return fmt.Errorf("check white list: %w", err)
