@@ -2,12 +2,14 @@ package limiter
 
 import (
 	"context"
+	"fmt"
 
 	redis "github.com/go-redis/redis/v8"
 )
 
 type LeakyBucketLimiter interface {
 	Allow(ctx context.Context, client *redis.Client, key string) error
+	Reset(ctx context.Context, client *redis.Client, key string) error
 }
 
 type AuthRateLimiter struct {
@@ -39,6 +41,13 @@ func (a *AuthRateLimiter) AllowByIP(ctx context.Context, ip string) error {
 }
 
 func (a *AuthRateLimiter) Reset(ctx context.Context, ip, login string) error {
-	// todo: implement this method
+	if err := a.loginRateLimiter.Reset(ctx, a.client, login); err != nil {
+		return fmt.Errorf("reset login rate limiter: %w", err)
+	}
+
+	if err := a.ipRateLimiter.Reset(ctx, a.client, ip); err != nil {
+		return fmt.Errorf("reset ip rate limiter: %w", err)
+	}
+
 	return nil
 }

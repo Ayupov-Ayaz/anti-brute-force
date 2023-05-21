@@ -1,13 +1,16 @@
 package handlers
 
-type Auth struct {
+type BaseRequest struct {
+	IP    string `json:"ip" validate:"required"`
 	Login string `json:"login" validate:"required"`
-	Pass  string `json:"password" validate:"required"`
 }
 
-type CheckAuth struct {
-	Auth
-	IP string `json:"ip" validate:"required"`
+type CheckAuthRequest struct {
+	BaseRequest
+	Pass string `json:"password" validate:"required"`
+}
+
+type ResetRequest struct {
 }
 
 type IP struct {

@@ -13,7 +13,7 @@ type Manager interface {
 	AddToWhiteList(ctx context.Context, ip, mask string) error
 	RemoveFromBlackList(ctx context.Context, ip, mask string) error
 	RemoveFromWhiteList(ctx context.Context, ip, mask string) error
-	Reset(ctx context.Context, login, pass string) error
+	Reset(ctx context.Context, login, ip string) error
 }
 
 type ManagerHTTP struct {
@@ -110,7 +110,7 @@ func (m *ManagerHTTP) removeFromWhiteList(ctx *fiber.Ctx) error {
 }
 
 func (m *ManagerHTTP) reset(ctx *fiber.Ctx) error {
-	var model Auth
+	var model BaseRequest
 
 	if err := ctx.BodyParser(&model); err != nil {
 		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
@@ -118,12 +118,11 @@ func (m *ManagerHTTP) reset(ctx *fiber.Ctx) error {
 	}
 
 	if err := m.validator.Validate(model); err != nil {
-		m.logger.Error().Err(err).Str("login", model.Login).
-			Str("pass", model.Pass).Msg("validate auth failed")
+		m.logger.Error().Err(err).Str("login", model.Login).Str("ip", model.IP).Msg("validate auth failed")
 		return err
 	}
 
-	if err := m.manager.Reset(ctx.Context(), model.Login, model.Pass); err != nil {
+	if err := m.manager.Reset(ctx.Context(), model.Login, model.IP); err != nil {
 		m.logger.Error().Err(err).Str("login", model.Login).Msg("reset failed")
 		return err
 	}
