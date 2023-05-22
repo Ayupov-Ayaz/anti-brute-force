@@ -9,6 +9,7 @@ import (
 	"github.com/ayupov-ayaz/anti-brute-force/internal/apperr"
 )
 
+//go:generate mockgen -source=checker.go -destination=mocks/mock.go
 type IPList interface {
 	Contains(ctx context.Context, ip string) (bool, error)
 }
@@ -66,12 +67,12 @@ func (a *App) parseIPKey(ip string) (string, error) {
 }
 
 func (a *App) Check(ctx context.Context, dirtyIP, login, pass string) error {
-	ip, err := a.parseIPKey(dirtyIP)
+	ipKey, err := a.parseIPKey(dirtyIP)
 	if err != nil {
 		return err
 	}
 
-	ok, err := a.whiteList.Contains(ctx, ip)
+	ok, err := a.whiteList.Contains(ctx, ipKey)
 	if err != nil {
 		return fmt.Errorf("check white list: %w", err)
 	}
@@ -80,7 +81,7 @@ func (a *App) Check(ctx context.Context, dirtyIP, login, pass string) error {
 		return nil
 	}
 
-	ok, err = a.blackList.Contains(ctx, ip)
+	ok, err = a.blackList.Contains(ctx, ipKey)
 	if err != nil {
 		return fmt.Errorf("check black list: %w", err)
 	}
@@ -89,7 +90,7 @@ func (a *App) Check(ctx context.Context, dirtyIP, login, pass string) error {
 		return apperr.ErrUserIsBlocked
 	}
 
-	if err := a.authIsAllowed(ctx, ip, login, pass); err != nil {
+	if err := a.authIsAllowed(ctx, ipKey, login, pass); err != nil {
 		return fmt.Errorf("check auth: %w", err)
 	}
 
