@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	ip    = "192.168.23.3"
-	mask  = "255.255.255.0.0"
+	ip    = "192.1.1.128/28"
 	login = "login"
 )
 
@@ -28,8 +27,7 @@ var successUnmarshalIPCallBack = func(data []byte, v interface{}) error {
 		return fmt.Errorf("invalid type %T", v)
 	}
 
-	model.IP = ip
-	model.Mask = mask
+	model.IPNet = ip
 
 	return nil
 }
@@ -39,8 +37,7 @@ func TestManagerHTTP_addToBlackList(t *testing.T) {
 	reqBody := []byte(`{json}`)
 
 	model := IP{
-		IP:   ip,
-		Mask: mask,
+		IPNet: ip,
 	}
 
 	errUnmarshal := errors.New("unmarshal failed")
@@ -82,7 +79,7 @@ func TestManagerHTTP_addToBlackList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.addToBlackList(ip, mask).Return(errAdd),
+					m.addToBlackList(ip).Return(errAdd),
 				)
 			},
 		},
@@ -94,7 +91,7 @@ func TestManagerHTTP_addToBlackList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.addToBlackList(ip, mask).Return(nil),
+					m.addToBlackList(ip).Return(nil),
 				)
 			},
 		},
@@ -133,8 +130,7 @@ func TestManagerHTTP_addToWhiteList(t *testing.T) {
 
 	reqBody := []byte(`{json}`)
 	model := IP{
-		IP:   ip,
-		Mask: mask,
+		IPNet: ip,
 	}
 
 	errUnmarshal := errors.New("unmarshal failed")
@@ -176,7 +172,7 @@ func TestManagerHTTP_addToWhiteList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.addToWhiteList(ip, mask).Return(errAdd),
+					m.addToWhiteList(ip).Return(errAdd),
 				)
 			},
 		},
@@ -188,7 +184,7 @@ func TestManagerHTTP_addToWhiteList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.addToWhiteList(ip, mask).Return(nil),
+					m.addToWhiteList(ip).Return(nil),
 				)
 			},
 		},
@@ -230,8 +226,7 @@ func TestManagerHTTP_removeFromBlackList(t *testing.T) {
 	errRemove := errors.New("remove failed")
 
 	model := IP{
-		IP:   ip,
-		Mask: mask,
+		IPNet: ip,
 	}
 
 	tests := []struct {
@@ -269,7 +264,7 @@ func TestManagerHTTP_removeFromBlackList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.removeFromBlackList(ip, mask).Return(errRemove),
+					m.removeFromBlackList(ip).Return(errRemove),
 				)
 			},
 		},
@@ -281,7 +276,7 @@ func TestManagerHTTP_removeFromBlackList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.removeFromBlackList(ip, mask).Return(nil),
+					m.removeFromBlackList(ip).Return(nil),
 				)
 			},
 		},
@@ -324,8 +319,7 @@ func TestManagerHTTP_removeFromWhiteList(t *testing.T) {
 	errRemove := errors.New("remove failed")
 
 	model := IP{
-		IP:   ip,
-		Mask: mask,
+		IPNet: ip,
 	}
 
 	tests := []struct {
@@ -363,7 +357,7 @@ func TestManagerHTTP_removeFromWhiteList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.removeFromWhiteList(ip, mask).Return(errRemove),
+					m.removeFromWhiteList(ip).Return(errRemove),
 				)
 			},
 		},
@@ -375,7 +369,7 @@ func TestManagerHTTP_removeFromWhiteList(t *testing.T) {
 				gomock.InOrder(
 					m.unmarshal(reqBody, successUnmarshalIPCallBack),
 					m.validate(model).Return(nil),
-					m.removeFromWhiteList(ip, mask).Return(nil),
+					m.removeFromWhiteList(ip).Return(nil),
 				)
 			},
 		},

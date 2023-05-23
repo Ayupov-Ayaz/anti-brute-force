@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	ipService "github.com/ayupov-ayaz/anti-brute-force/internal/modules/ip"
+
 	"github.com/alicebob/miniredis"
 
 	redis "github.com/go-redis/redis/v8"
@@ -39,15 +41,16 @@ func newList(t *testing.T) (*IPList, *redis.Client) {
 	require.NoError(t, err)
 
 	storage := redisstorage.New(db)
-	list := New(addr, storage)
+	ip := ipService.New()
+	list := New(addr, storage, ip)
 
 	return list, db
 }
 
 func TestIPList_WithRedis_Add(t *testing.T) {
 	const (
-		addr     = "blacklist"
-		bannedIP = "254.13.2.11"
+		addr        = "blacklist"
+		bannedIPNet = "192.1.1.128/28"
 	)
 
 	list, db := newList(t)
@@ -56,18 +59,18 @@ func TestIPList_WithRedis_Add(t *testing.T) {
 	}()
 
 	ctx := context.Background()
-	err := list.Add(ctx, bannedIP)
+	err := list.Add(ctx, bannedIPNet)
 	require.NoError(t, err)
 
-	v, err := db.HGet(ctx, addr, bannedIP).Result()
+	v, err := db.SMembers(ctx, addr).Result()
 	require.NoError(t, err)
-	require.Equal(t, value, v)
+	require.Equal(t, []string{bannedIPNet}, v)
 }
 
 func TestIPList_WithRedis_Remove(t *testing.T) {
 	const (
-		bannedIP  = "123.113.23.1"
-		anotherIP = "213.41.13.5"
+		bannedIPNet  = "192.1.1.128/28"
+		anotherIPNet = "192.1.1.64/27"
 	)
 
 	list, db := newList(t)
@@ -85,19 +88,20 @@ func TestIPList_WithRedis_Remove(t *testing.T) {
 	}{
 		{
 			name:   "remove not banned ip",
-			ip:     anotherIP,
+			ip:     anotherIPNet,
 			after:  func(t *testing.T) {},
 			before: func(t *testing.T) {},
 		},
 		{
 			name: "remove banned ip",
-			ip:   bannedIP,
+			ip:   bannedIPNet,
 			before: func(t *testing.T) {
-				require.NoError(t, db.HSet(ctx, addr, bannedIP, value).Err())
+				require.NoError(t, db.SAdd(ctx, addr, bannedIPNet).Err())
 			},
 			after: func(t *testing.T) {
-				_, err := db.HGet(ctx, addr, bannedIP).Result()
-				require.ErrorIs(t, err, redis.Nil)
+				res, err := db.SMembers(ctx, addr).Result()
+				require.NoError(t, err)
+				require.Empty(t, res)
 			},
 		},
 	}
@@ -114,10 +118,10 @@ func TestIPList_WithRedis_Remove(t *testing.T) {
 
 func TestIPList_WithRedis_Contains(t *testing.T) {
 	const (
-		addr           = "blacklist"
-		bannedIP       = "254.13.2.10"
-		anotherValueIP = "235.0.40.2"
-		notFoundIP     = "225.10.243.3"
+		addr        = "blacklist"
+		bannedIPNet = "192.1.1.0/26"
+		bannedIP    = "192.1.1.63"
+		notBannedIP = "192.1.1.143"
 	)
 
 	list, db := newList(t)
@@ -135,22 +139,15 @@ func TestIPList_WithRedis_Contains(t *testing.T) {
 	}{
 		{
 			name:   "not found",
-			ip:     notFoundIP,
+			ip:     notBannedIP,
 			before: func(t *testing.T) {},
 		},
 		{
-			name: "another value",
-			ip:   anotherValueIP,
-			before: func(t *testing.T) {
-				require.NoError(t, db.HSet(ctx, addr, anotherValueIP, "another value").Err())
-			},
-		},
-		{
-			name: "same value",
+			name: "found ip",
 			ip:   bannedIP,
 			ok:   true,
 			before: func(t *testing.T) {
-				require.NoError(t, db.HSet(ctx, addr, bannedIP, value).Err())
+				require.NoError(t, db.SAdd(ctx, addr, bannedIPNet).Err())
 			},
 		},
 	}

@@ -68,14 +68,14 @@ func (m *mock) ipToUint32() *gomock.Call {
 		After(m.parseIP(nil))
 }
 
-func (m *mock) containsWhiteList(ok bool, err error) *gomock.Call {
-	return m.whiteList.EXPECT().Contains(m.ctx, ipStr).
-		Times(1).Return(ok, err)
+func (m *mock) containsWhiteList() *gomock.Call {
+	return m.whiteList.EXPECT().Contains(m.ctx, ip).
+		Times(1)
 }
 
-func (m *mock) containsBlackList(ok bool, err error) *gomock.Call {
-	return m.blackList.EXPECT().Contains(m.ctx, ipStr).
-		Times(1).Return(ok, err)
+func (m *mock) containsBlackList() *gomock.Call {
+	return m.blackList.EXPECT().Contains(m.ctx, ip).
+		Times(1)
 }
 
 func TestApp_authIsAllowed(t *testing.T) {
@@ -188,29 +188,16 @@ func TestApp_Check(t *testing.T) {
 		before func(m *mock)
 	}{
 		{
-			name: "parse ip failed",
-			err:  errParseIP,
-			before: func(m *mock) {
-				m.parseIP(errParseIP)
-			},
-		},
-		{
 			name: "check white list failed",
 			err:  errWhiteList,
 			before: func(m *mock) {
-				gomock.InOrder(
-					m.ipToUint32(),
-					m.containsWhiteList(false, errWhiteList),
-				)
+				m.containsWhiteList().Return(false, errWhiteList)
 			},
 		},
 		{
 			name: "user is in white list",
 			before: func(m *mock) {
-				gomock.InOrder(
-					m.ipToUint32(),
-					m.containsWhiteList(true, nil),
-				)
+				m.containsWhiteList().Return(true, nil)
 			},
 		},
 		{
@@ -218,9 +205,8 @@ func TestApp_Check(t *testing.T) {
 			err:  errBlackList,
 			before: func(m *mock) {
 				gomock.InOrder(
-					m.ipToUint32(),
-					m.containsWhiteList(false, nil),
-					m.containsBlackList(false, errBlackList),
+					m.containsWhiteList().Return(false, nil),
+					m.containsBlackList().Return(false, errBlackList),
 				)
 			},
 		},
@@ -229,9 +215,19 @@ func TestApp_Check(t *testing.T) {
 			err:  apperr.ErrUserIsBlocked,
 			before: func(m *mock) {
 				gomock.InOrder(
-					m.ipToUint32(),
-					m.containsWhiteList(false, nil),
-					m.containsBlackList(true, nil),
+					m.containsWhiteList().Return(false, nil),
+					m.containsBlackList().Return(true, nil),
+				)
+			},
+		},
+		{
+			name: "parse ip failed",
+			err:  errParseIP,
+			before: func(m *mock) {
+				gomock.InOrder(
+					m.containsWhiteList().Return(false, nil),
+					m.containsBlackList().Return(false, nil),
+					m.parseIP(errParseIP),
 				)
 			},
 		},
@@ -240,9 +236,9 @@ func TestApp_Check(t *testing.T) {
 			err:  errCheck,
 			before: func(m *mock) {
 				gomock.InOrder(
+					m.containsWhiteList().Return(false, nil),
+					m.containsBlackList().Return(false, nil),
 					m.ipToUint32(),
-					m.containsWhiteList(false, nil),
-					m.containsBlackList(false, nil),
 					m.checkIP(errCheck),
 				)
 			},
@@ -251,9 +247,9 @@ func TestApp_Check(t *testing.T) {
 			name: "success",
 			before: func(m *mock) {
 				gomock.InOrder(
+					m.containsWhiteList().Return(false, nil),
+					m.containsBlackList().Return(false, nil),
 					m.ipToUint32(),
-					m.containsWhiteList(false, nil),
-					m.containsBlackList(false, nil),
 					m.checkIP(nil),
 				)
 			},

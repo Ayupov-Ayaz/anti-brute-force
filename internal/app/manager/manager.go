@@ -17,7 +17,7 @@ type Resetter interface {
 }
 
 type IPService interface {
-	ParseMaskedIP(ip, mask string) (net.IP, error)
+	ParseCIDR(ip string) (*net.IPNet, error)
 	ParseIP(ip string) (net.IP, error)
 	IPToUint32(ip net.IP) uint32
 }
@@ -38,53 +38,20 @@ func New(whiteList, blackList IPList, ip IPService, resetter Resetter) *App {
 	}
 }
 
-func (a *App) makeMaskedKey(ip, mask string) (string, error) {
-	maskedIP, err := a.ip.ParseMaskedIP(ip, mask)
-	if err != nil {
-		return "", err
-	}
-
-	return strconv.FormatUint(uint64(a.ip.IPToUint32(maskedIP)), 10), nil
+func (a *App) AddToBlackList(ctx context.Context, ipNet string) error {
+	return a.blackList.Add(ctx, ipNet)
 }
 
-func (a *App) AddToBlackList(ctx context.Context, ip, mask string) error {
-	key, err := a.makeMaskedKey(ip, mask)
-	if err != nil {
-		return err
-	}
-
-	if err := a.blackList.Add(ctx, key); err != nil {
-		return err
-	}
-
-	return nil
+func (a *App) AddToWhiteList(ctx context.Context, ipNet string) error {
+	return a.whiteList.Add(ctx, ipNet)
 }
 
-func (a *App) AddToWhiteList(ctx context.Context, ip, mask string) error {
-	key, err := a.makeMaskedKey(ip, mask)
-	if err != nil {
-		return err
-	}
-
-	return a.whiteList.Add(ctx, key)
+func (a *App) RemoveFromBlackList(ctx context.Context, ipNet string) error {
+	return a.blackList.Remove(ctx, ipNet)
 }
 
-func (a *App) RemoveFromBlackList(ctx context.Context, ip, mask string) error {
-	key, err := a.makeMaskedKey(ip, mask)
-	if err != nil {
-		return err
-	}
-
-	return a.blackList.Remove(ctx, key)
-}
-
-func (a *App) RemoveFromWhiteList(ctx context.Context, ip, mask string) error {
-	key, err := a.makeMaskedKey(ip, mask)
-	if err != nil {
-		return err
-	}
-
-	return a.whiteList.Remove(ctx, key)
+func (a *App) RemoveFromWhiteList(ctx context.Context, ipNet string) error {
+	return a.whiteList.Remove(ctx, ipNet)
 }
 
 func (a *App) Reset(ctx context.Context, login, dirtyIP string) error {

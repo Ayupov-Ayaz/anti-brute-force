@@ -137,6 +137,21 @@ func (mr *MockIPServiceMockRecorder) IPToUint32(ip interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IPToUint32", reflect.TypeOf((*MockIPService)(nil).IPToUint32), ip)
 }
 
+// ParseCIDR mocks base method.
+func (m *MockIPService) ParseCIDR(ip string) (*net.IPNet, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ParseCIDR", ip)
+	ret0, _ := ret[0].(*net.IPNet)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ParseCIDR indicates an expected call of ParseCIDR.
+func (mr *MockIPServiceMockRecorder) ParseCIDR(ip interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParseCIDR", reflect.TypeOf((*MockIPService)(nil).ParseCIDR), ip)
+}
+
 // ParseIP mocks base method.
 func (m *MockIPService) ParseIP(ip string) (net.IP, error) {
 	m.ctrl.T.Helper()
@@ -150,19 +165,4 @@ func (m *MockIPService) ParseIP(ip string) (net.IP, error) {
 func (mr *MockIPServiceMockRecorder) ParseIP(ip interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParseIP", reflect.TypeOf((*MockIPService)(nil).ParseIP), ip)
-}
-
-// ParseMaskedIP mocks base method.
-func (m *MockIPService) ParseMaskedIP(ip, mask string) (net.IP, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ParseMaskedIP", ip, mask)
-	ret0, _ := ret[0].(net.IP)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ParseMaskedIP indicates an expected call of ParseMaskedIP.
-func (mr *MockIPServiceMockRecorder) ParseMaskedIP(ip, mask interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParseMaskedIP", reflect.TypeOf((*MockIPService)(nil).ParseMaskedIP), ip, mask)
 }
