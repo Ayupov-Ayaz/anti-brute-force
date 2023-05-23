@@ -1,0 +1,25 @@
+version: '3'
+
+services:
+  app:
+    container_name: anti-brute-force
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    restart: always
+
+  redis:
+    container_name: redis
+    image: redis
+    restart: always
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "6379:6379"
