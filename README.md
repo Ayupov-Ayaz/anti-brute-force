@@ -3,8 +3,8 @@
 ### [Task](task.md)
 
 ## Todo
-### Required
-* tests http
+### required
+* integration tests
 ### Optional:
 * grpc
 * tests grpc

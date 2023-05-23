@@ -8,6 +8,7 @@ import (
 	fiber "github.com/gofiber/fiber/v2"
 )
 
+//go:generate mockgen -source=manager.go -destination=mocks/mock_manager.go
 type Manager interface {
 	AddToBlackList(ctx context.Context, ip, mask string) error
 	AddToWhiteList(ctx context.Context, ip, mask string) error
@@ -17,15 +18,17 @@ type Manager interface {
 }
 
 type ManagerHTTP struct {
-	manager   Manager
+	app       Manager
 	validator Validator
+	decoder   Decoder
 	logger    zerolog.Logger
 }
 
-func NewManager(app Manager, validator Validator, logger zerolog.Logger) *ManagerHTTP {
+func NewManager(app Manager, validator Validator, decoder Decoder, logger zerolog.Logger) *ManagerHTTP {
 	return &ManagerHTTP{
-		manager:   app,
+		app:       app,
 		validator: validator,
+		decoder:   decoder,
 		logger:    logger,
 	}
 }
@@ -39,16 +42,16 @@ func (m *ManagerHTTP) Register(app *fiber.App) {
 	wl.Post("/add", m.addToWhiteList)
 	wl.Delete("/remove", m.removeFromWhiteList)
 
-	app.Post("/buckets/reset", m.reset)
+	app.Delete("/buckets", m.reset)
 }
 
 type AddToList func(ctx context.Context, ip, mask string) error
 
-func (m *ManagerHTTP) parseIP(ctx *fiber.Ctx) (ip string, mask string, err error) {
+func (m *ManagerHTTP) parseIP(body []byte) (ip string, mask string, err error) {
 	var model IP
 
-	if err := ctx.BodyParser(&model); err != nil {
-		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
+	if err := m.decoder.Unmarshal(body, &model); err != nil {
+		m.logger.Error().Err(err).Bytes("body", body).Msg("parse body failed")
 		return "", "", err
 	}
 
@@ -62,7 +65,7 @@ func (m *ManagerHTTP) parseIP(ctx *fiber.Ctx) (ip string, mask string, err error
 }
 
 func (m *ManagerHTTP) addToList(ctx *fiber.Ctx, addToList AddToList) error {
-	ip, mask, err := m.parseIP(ctx)
+	ip, mask, err := m.parseIP(ctx.Body())
 	if err != nil {
 		return err
 	}
@@ -77,17 +80,17 @@ func (m *ManagerHTTP) addToList(ctx *fiber.Ctx, addToList AddToList) error {
 }
 
 func (m *ManagerHTTP) addToBlackList(ctx *fiber.Ctx) error {
-	return m.addToList(ctx, m.manager.AddToBlackList)
+	return m.addToList(ctx, m.app.AddToBlackList)
 }
 
 func (m *ManagerHTTP) addToWhiteList(ctx *fiber.Ctx) error {
-	return m.addToList(ctx, m.manager.AddToWhiteList)
+	return m.addToList(ctx, m.app.AddToWhiteList)
 }
 
 type RemoveFromList func(ctx context.Context, ip, mask string) error
 
 func (m *ManagerHTTP) removeFromList(ctx *fiber.Ctx, remove RemoveFromList) error {
-	ip, mask, err := m.parseIP(ctx)
+	ip, mask, err := m.parseIP(ctx.Body())
 	if err != nil {
 		return err
 	}
@@ -102,17 +105,17 @@ func (m *ManagerHTTP) removeFromList(ctx *fiber.Ctx, remove RemoveFromList) erro
 }
 
 func (m *ManagerHTTP) removeFromBlackList(ctx *fiber.Ctx) error {
-	return m.removeFromList(ctx, m.manager.RemoveFromBlackList)
+	return m.removeFromList(ctx, m.app.RemoveFromBlackList)
 }
 
 func (m *ManagerHTTP) removeFromWhiteList(ctx *fiber.Ctx) error {
-	return m.removeFromList(ctx, m.manager.RemoveFromWhiteList)
+	return m.removeFromList(ctx, m.app.RemoveFromWhiteList)
 }
 
 func (m *ManagerHTTP) reset(ctx *fiber.Ctx) error {
 	var model BaseRequest
 
-	if err := ctx.BodyParser(&model); err != nil {
+	if err := m.decoder.Unmarshal(ctx.Body(), &model); err != nil {
 		m.logger.Error().Err(err).Bytes("body", ctx.Body()).Msg("parse body failed")
 		return err
 	}
@@ -122,7 +125,7 @@ func (m *ManagerHTTP) reset(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	if err := m.manager.Reset(ctx.Context(), model.Login, model.IP); err != nil {
+	if err := m.app.Reset(ctx.Context(), model.Login, model.IP); err != nil {
 		m.logger.Error().Err(err).Str("login", model.Login).Msg("reset failed")
 		return err
 	}

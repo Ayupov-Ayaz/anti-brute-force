@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+//go:generate mockgen -source=manager.go -destination=mocks/mock.go
 type IPList interface {
 	Add(ctx context.Context, ip string) error
 	Remove(ctx context.Context, ip string) error
