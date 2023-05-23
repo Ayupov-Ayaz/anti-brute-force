@@ -51,25 +51,20 @@ func Execute() error {
 	return runCmd.Execute()
 }
 
-func run(_ *cobra.Command, _ []string) error {
-	cfg, err := config.ParseConfig(port, useGRPC)
-	if err != nil {
-		return fmt.Errorf("parse config: %w", err)
-	}
-
+func MakeServer(cfg config.Config) (*httpserver.Server, error) {
 	valid := validator.New()
 	if err := valid.Validate(cfg); err != nil {
-		return fmt.Errorf("validate config: %w", err)
+		return nil, fmt.Errorf("validate config: %w", err)
 	}
 
 	zLogger, err := logger.New(cfg.Logger.Level)
 	if err != nil {
-		return fmt.Errorf("logger: %w", err)
+		return nil, fmt.Errorf("logger: %w", err)
 	}
 
 	redisClient, err := redissdb.NewRedisClient(cfg.Redis.Addr, cfg.Redis.User, cfg.Redis.Pass)
 	if err != nil {
-		return fmt.Errorf("redis client: %w", err)
+		return nil, fmt.Errorf("redis client: %w", err)
 	}
 
 	storage := redisstorage.New(redisClient)
@@ -85,7 +80,19 @@ func run(_ *cobra.Command, _ []string) error {
 	checkerHandler := handlers.NewChecker(checker.New(whiteList, blackList, ipService, authLimiter),
 		valid, decoderService, zLogger)
 
-	server := httpserver.New(managerHandler, checkerHandler, zLogger)
+	return httpserver.New(managerHandler, checkerHandler, zLogger), nil
+}
+
+func run(_ *cobra.Command, _ []string) error {
+	cfg, err := config.ParseConfig(port, useGRPC)
+	if err != nil {
+		return fmt.Errorf("parse config: %w", err)
+	}
+
+	server, err := MakeServer(*cfg)
+	if err != nil {
+		return err
+	}
 
 	if err := server.Start(httpserver.NewFiber(), cfg.Server.Port); err != nil {
 		return fmt.Errorf("http server: %w", err)

@@ -28,11 +28,14 @@ func New(manager *handlers.ManagerHTTP, checker *handlers.CheckerHTTP, logger ze
 	}
 }
 
-func (s *Server) Start(app *fiber.App, port int) error {
-	s.shutdown = app.Shutdown
-
+func (s *Server) Register(app *fiber.App) {
 	s.manager.Register(app)
 	s.checker.Register(app)
+}
+
+func (s *Server) Start(app *fiber.App, port int) error {
+	s.shutdown = app.Shutdown
+	s.Register(app)
 
 	if err := app.Listen(":" + strconv.Itoa(port)); err != nil {
 		return fmt.Errorf("listen port=%d failed: %w", port, err)
