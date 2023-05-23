@@ -58,6 +58,10 @@ func (s *Service) ParseIP(ip string) (net.IP, error) {
 	return parseIP(ip)
 }
 
-func (s *Service) IPToUint32(ip net.IP) uint32 {
+func ipToUint32(ip net.IP) uint32 {
 	return binary.BigEndian.Uint32(ip.To4())
+}
+
+func (s *Service) IPToUint32(ip net.IP) uint32 {
+	return ipToUint32(ip)
 }

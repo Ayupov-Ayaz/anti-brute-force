@@ -11,6 +11,7 @@ import (
 	fiber "github.com/gofiber/fiber/v2"
 )
 
+//go:generate mockgen -source=checker.go -destination=mocks/mock_checker.go
 type Checker interface {
 	Check(ctx context.Context, ip, login, pass string) error
 }
@@ -19,16 +20,23 @@ type Validator interface {
 	Validate(i interface{}) error
 }
 
+type Decoder interface {
+	Marshal(i interface{}) ([]byte, error)
+	Unmarshal(data []byte, i interface{}) error
+}
+
 type CheckerHTTP struct {
 	app       Checker
 	validator Validator
+	decoder   Decoder
 	logger    zerolog.Logger
 }
 
-func NewChecker(app Checker, validator Validator, logger zerolog.Logger) *CheckerHTTP {
+func NewChecker(app Checker, validator Validator, decoder Decoder, logger zerolog.Logger) *CheckerHTTP {
 	return &CheckerHTTP{
 		app:       app,
 		validator: validator,
+		decoder:   decoder,
 		logger:    logger,
 	}
 }
@@ -41,8 +49,10 @@ func (c *CheckerHTTP) Register(app *fiber.App) {
 
 func (c *CheckerHTTP) check(ctx *fiber.Ctx) error {
 	var auth CheckAuthRequest
-	if err := ctx.BodyParser(&auth); err != nil {
-		c.logger.Error().Err(err).Msg("failed to parse request body")
+	body := ctx.Body()
+	if err := c.decoder.Unmarshal(body, &auth); err != nil {
+		c.logger.Error().Bytes("req", body).Err(err).
+			Msg("failed to parse request body")
 		return err
 	}
 
@@ -64,7 +74,13 @@ func (c *CheckerHTTP) check(ctx *fiber.Ctx) error {
 		}
 	}
 
-	if err := ctx.Status(status).JSON(Response{Ok: allowed}); err != nil {
+	respBody, err := c.decoder.Marshal(Response{Ok: allowed})
+	if err != nil {
+		c.logger.Error().Err(err).Msg("failed to marshal response")
+		return err
+	}
+
+	if err := ctx.Status(status).Send(respBody); err != nil {
 		c.logger.Error().Err(err).Msg("failed to send response")
 		return err
 	}
