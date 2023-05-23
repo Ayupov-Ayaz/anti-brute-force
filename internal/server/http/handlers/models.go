@@ -14,8 +14,7 @@ type ResetRequest struct {
 }
 
 type IP struct {
-	IP   string `json:"ip" validate:"required"`
-	Mask string `json:"mask" validate:"required"`
+	IPNet string `json:"ip_net" validate:"required"`
 }
 
 type Response struct {

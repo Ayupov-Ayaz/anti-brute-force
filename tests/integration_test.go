@@ -2,6 +2,7 @@ package tests
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,14 +10,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-redis/redis/v8"
+
+	"github.com/alicebob/miniredis"
+
 	servercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/server"
 
 	limitercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/limiter"
 	listcfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/list"
 	loggercfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/logger"
 	rediscfg "github.com/ayupov-ayaz/anti-brute-force/cli/config/redis"
-
-	"github.com/alicebob/miniredis"
 
 	"github.com/ayupov-ayaz/anti-brute-force/cli/config"
 
@@ -27,15 +30,15 @@ import (
 )
 
 const (
-	ip       = "192.168.0.1"
-	mask     = "255.255.255.0"
-	maskedIP = "192.168.0.0"
+	ipNet    = "192.1.1.64/27"
+	maskedIP = "192.1.1.65"
 )
 
 func testConfig(t *testing.T) config.Config {
 	t.Helper()
 	mr := miniredis.NewMiniRedis()
 	require.NoError(t, mr.Start())
+
 	return config.Config{
 		Server: servercfg.Server{Port: 8080},
 		Redis: rediscfg.Redis{
@@ -82,10 +85,16 @@ func TestApp(t *testing.T) {
 	server, err := run.MakeServer(cfg)
 	require.NoError(t, err)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	client := redis.NewClient(&redis.Options{Addr: cfg.Redis.Addr})
+	require.NoError(t, client.Ping(ctx).Err())
+
 	app := fiber.New()
 	server.Register(app)
 
-	listBody := fmt.Sprintf(`{"ip":"%s","mask":"%s"}`, ip, mask)
+	listBody := fmt.Sprintf(`{"ip_net":"%s"}`, ipNet)
 	checkBody := func(login, pass, ip string) string {
 		return fmt.Sprintf(`{"login":"%s","password":"%s","ip":"%s"}`, login, pass, ip)
 	}

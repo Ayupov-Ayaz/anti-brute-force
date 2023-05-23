@@ -10,10 +10,10 @@ import (
 
 //go:generate mockgen -source=manager.go -destination=mocks/mock_manager.go
 type Manager interface {
-	AddToBlackList(ctx context.Context, ip, mask string) error
-	AddToWhiteList(ctx context.Context, ip, mask string) error
-	RemoveFromBlackList(ctx context.Context, ip, mask string) error
-	RemoveFromWhiteList(ctx context.Context, ip, mask string) error
+	AddToBlackList(ctx context.Context, ipNet string) error
+	AddToWhiteList(ctx context.Context, ipNet string) error
+	RemoveFromBlackList(ctx context.Context, ipNet string) error
+	RemoveFromWhiteList(ctx context.Context, ipNet string) error
 	Reset(ctx context.Context, login, ip string) error
 }
 
@@ -45,34 +45,32 @@ func (m *ManagerHTTP) Register(app *fiber.App) {
 	app.Delete("/buckets", m.reset)
 }
 
-type AddToList func(ctx context.Context, ip, mask string) error
+type AddToList func(ctx context.Context, ipNet string) error
 
-func (m *ManagerHTTP) parseIP(body []byte) (ip string, mask string, err error) {
+func (m *ManagerHTTP) parseIP(body []byte) (ip string, err error) {
 	var model IP
 
 	if err := m.decoder.Unmarshal(body, &model); err != nil {
 		m.logger.Error().Err(err).Bytes("body", body).Msg("parse body failed")
-		return "", "", err
+		return "", err
 	}
 
 	if err := m.validator.Validate(model); err != nil {
-		m.logger.Error().Err(err).Str("mask", model.Mask).
-			Str("ip", model.IP).Msg("validate ip failed")
-		return "", "", err
+		m.logger.Error().Err(err).Str("ip", model.IPNet).Msg("validate ip failed")
+		return "", err
 	}
 
-	return model.IP, model.Mask, nil
+	return model.IPNet, nil
 }
 
 func (m *ManagerHTTP) addToList(ctx *fiber.Ctx, addToList AddToList) error {
-	ip, mask, err := m.parseIP(ctx.Body())
+	ipNet, err := m.parseIP(ctx.Body())
 	if err != nil {
 		return err
 	}
 
-	if err := addToList(ctx.Context(), ip, mask); err != nil {
-		m.logger.Error().Err(err).Str("mask", mask).
-			Str("ip", ip).Msg("add to list failed")
+	if err := addToList(ctx.Context(), ipNet); err != nil {
+		m.logger.Error().Err(err).Str("ip", ipNet).Msg("add to list failed")
 		return err
 	}
 
@@ -87,17 +85,16 @@ func (m *ManagerHTTP) addToWhiteList(ctx *fiber.Ctx) error {
 	return m.addToList(ctx, m.app.AddToWhiteList)
 }
 
-type RemoveFromList func(ctx context.Context, ip, mask string) error
+type RemoveFromList func(ctx context.Context, ipNet string) error
 
 func (m *ManagerHTTP) removeFromList(ctx *fiber.Ctx, remove RemoveFromList) error {
-	ip, mask, err := m.parseIP(ctx.Body())
+	ipNet, err := m.parseIP(ctx.Body())
 	if err != nil {
 		return err
 	}
 
-	if err := remove(ctx.Context(), ip, mask); err != nil {
-		m.logger.Error().Err(err).Str("mask", mask).
-			Str("ip", ip).Msg("remove from list failed")
+	if err := remove(ctx.Context(), ipNet); err != nil {
+		m.logger.Error().Err(err).Str("ip", ipNet).Msg("remove from list failed")
 		return err
 	}
 

@@ -67,12 +67,7 @@ func (a *App) parseIPKey(ip string) (string, error) {
 }
 
 func (a *App) Check(ctx context.Context, dirtyIP, login, pass string) error {
-	ipKey, err := a.parseIPKey(dirtyIP)
-	if err != nil {
-		return err
-	}
-
-	ok, err := a.whiteList.Contains(ctx, ipKey)
+	ok, err := a.whiteList.Contains(ctx, dirtyIP)
 	if err != nil {
 		return fmt.Errorf("check white list: %w", err)
 	}
@@ -81,13 +76,18 @@ func (a *App) Check(ctx context.Context, dirtyIP, login, pass string) error {
 		return nil
 	}
 
-	ok, err = a.blackList.Contains(ctx, ipKey)
+	ok, err = a.blackList.Contains(ctx, dirtyIP)
 	if err != nil {
 		return fmt.Errorf("check black list: %w", err)
 	}
 
 	if ok {
 		return apperr.ErrUserIsBlocked
+	}
+
+	ipKey, err := a.parseIPKey(dirtyIP)
+	if err != nil {
+		return err
 	}
 
 	if err := a.authIsAllowed(ctx, ipKey, login, pass); err != nil {

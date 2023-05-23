@@ -42,20 +42,20 @@ func (m *mock) check(ip, login, pass string) *gomock.Call {
 	return m.checker.EXPECT().Check(gomock.Any(), ip, login, pass).Times(1)
 }
 
-func (m *mock) addToBlackList(ip, mask string) *gomock.Call {
-	return m.manager.EXPECT().AddToBlackList(gomock.Any(), ip, mask).Times(1)
+func (m *mock) addToBlackList(ip string) *gomock.Call {
+	return m.manager.EXPECT().AddToBlackList(gomock.Any(), ip).Times(1)
 }
 
-func (m *mock) addToWhiteList(ip, mask string) *gomock.Call {
-	return m.manager.EXPECT().AddToWhiteList(gomock.Any(), ip, mask).Times(1)
+func (m *mock) addToWhiteList(ip string) *gomock.Call {
+	return m.manager.EXPECT().AddToWhiteList(gomock.Any(), ip).Times(1)
 }
 
-func (m *mock) removeFromBlackList(ip, mask string) *gomock.Call {
-	return m.manager.EXPECT().RemoveFromBlackList(gomock.Any(), ip, mask).Times(1)
+func (m *mock) removeFromBlackList(ip string) *gomock.Call {
+	return m.manager.EXPECT().RemoveFromBlackList(gomock.Any(), ip).Times(1)
 }
 
-func (m *mock) removeFromWhiteList(ip, mask string) *gomock.Call {
-	return m.manager.EXPECT().RemoveFromWhiteList(gomock.Any(), ip, mask).Times(1)
+func (m *mock) removeFromWhiteList(ip string) *gomock.Call {
+	return m.manager.EXPECT().RemoveFromWhiteList(gomock.Any(), ip).Times(1)
 }
 
 func (m *mock) reset(login, ip string) *gomock.Call {

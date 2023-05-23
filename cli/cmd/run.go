@@ -69,11 +69,11 @@ func MakeServer(cfg config.Config) (*httpserver.Server, error) {
 
 	storage := redisstorage.New(redisClient)
 
-	blackList := iplist.New(cfg.IPList.BlackListAddr, storage)
-	whiteList := iplist.New(cfg.IPList.WhiteListAddr, storage)
+	ipService := ip.New()
+	blackList := iplist.New(cfg.IPList.BlackListAddr, storage, ipService)
+	whiteList := iplist.New(cfg.IPList.WhiteListAddr, storage, ipService)
 
 	authLimiter := internal.NewAuthRateLimiter(cfg.Limiter, redisClient, zLogger)
-	ipService := ip.New()
 	decoderService := decoder.New()
 	managerHandler := handlers.NewManager(manager.New(whiteList, blackList, ipService, authLimiter),
 		valid, decoderService, zLogger)
