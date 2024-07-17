@@ -1,0 +1,42 @@
+name: Pull Request Workflow
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2.1.3
+        with:
+          go-version: 1.17
+
+      - name: Set up GOPATH
+        run: |
+          mkdir -p $HOME/go
+          echo "export GOPATH=$HOME/go" >> $HOME/.bashrc
+          echo "export PATH=$PATH:$HOME/go/bin" >> $HOME/.bashrc
+          source $HOME/.bashrc
+
+      - name: Install dependencies
+        run: go get
+
+      - name: Build
+        run: go build
+
+      - name: Run tests
+        run: go test ./...
+
+      - name: Install golangci-lint
+        run: GO111MODULE=on go get github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+
+      - name: Run linter
+        run: golangci-lint run
